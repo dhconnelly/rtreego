@@ -20,16 +20,16 @@ Installation
 
 Using a recently updated Go programming language (at least weekly.2012-01-27 11507), simply
 
-`go install github.com/dhconnelly/rtreego`.
+`go install github.com/dhconnelly/rtreego`
 
 Then `import "github.com/dhconnelly/rtreego"` in your source files.
 
 References
 ----------
 
-- A. Guttman, [R-trees: A Dynamic Index Structure for Spatial Searching](http://www.cs.jhu.edu/~misha/ReadingSeminar/Papers/Guttman84.pdf). Proceedings of ACM SIGMOD, pages 47-57, 1984.
+- A. Guttman. [R-trees: A Dynamic Index Structure for Spatial Searching](http://www.cs.jhu.edu/~misha/ReadingSeminar/Papers/Guttman84.pdf). Proceedings of ACM SIGMOD, pages 47-57, 1984.
 - N. Beckmann, H .P. Kriegel, R. Schneider and B. Seeger. [The R*-tree: An Efficient and Robust Access Method for Points and Rectangles](http://infolab.usc.edu/csci587/Fall2011/papers/p322-beckmann.pdf). Proceedings of ACM SIGMOD, pages 323-331, May 1990.
-- N. Roussopoulos, S. Kelley and F. Vincent, [Nearest Neighbor Queries](http://www.postgis.org/support/nearestneighbor.pdf). ACM SIGMOD, pages 71-79, 1995.
+- N. Roussopoulos, S. Kelley and F. Vincent. [Nearest Neighbor Queries](http://www.postgis.org/support/nearestneighbor.pdf). ACM SIGMOD, pages 71-79, 1995.
 
 About
 -----
