@@ -11,6 +11,12 @@ The classic R-tree is a popular and efficient data structure for storing and que
 
 The R*-tree is a dynamic data structure--insertions and deletions can be performed in any order.  Further, insertions and deletions trigger rebalancing automatically, so that no explicit rebalancing is required by the user.  Maximum tree height is guaranteed to be logarithmic in the number of entries, but there is no guarantee of good worst-case query performance; a number of heuristics are applied that perform well in practice.  For more details on these heuristics please refer to the references.
 
+
+Status
+------
+
+rtreego is currently in initial stages of development and is not ready for use.
+
 Usage
 -----
 
@@ -34,4 +40,4 @@ References
 About
 -----
 
-This library was written by [Daniel Connelly](http://dhconnelly.com) and is released under a BSD-style license.  See the LICENSE file for more details.
+This library is written and maintained by [Daniel Connelly](http://dhconnelly.com) and is released under a BSD-style license.  See the LICENSE file for more details.

@@ -1,9 +1,23 @@
+// Copyright 2012 Daniel Connelly.  All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package rtreego
 
 import (
 	"fmt"
 	"math"
 )
+
+// DimError represents a failure due to mismatched dimensions.
+type DimError struct {
+	Expected int
+	Actual   int
+}
+
+func (err *DimError) Error() string {
+	return fmt.Sprintf("Expected dim %d, got %d", err.Expected, err.Actual)
+}
 
 // Point represents a point in n-dimensional Euclidean space.
 type Point []float64
@@ -12,16 +26,6 @@ type Point []float64
 // [a1, b1] x [a2, b2] x ... x [an, bn], where ai < bi for all 1 <= i <= n.
 type Rect struct {
 	p, q Point // p[i] <= q[i] for all i
-}
-
-// DimError represents a failure due to mismatched dimensions.
-type DimError struct {
-	Expected int
-	Actual int
-}
-
-func (err *DimError) Error() string {
-	return fmt.Sprintf("Expected dim %d, got %d", err.Expected, err.Actual)
 }
 
 // Dist computes the Euclidean distance between two points p and q.  When

@@ -1,3 +1,7 @@
+// Copyright 2012 Daniel Connelly.  All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package rtreego
 
 import (
@@ -29,7 +33,7 @@ func TestNewRect(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected failure on NewRect(%v, %v)", p, lengths)
 	}
-	
+
 	for i, p1 := range p {
 		p2 := rect.p[i]
 		if p1 != p2 {
