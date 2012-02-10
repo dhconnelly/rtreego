@@ -163,16 +163,16 @@ func TestDoesNotOverlapRect(t *testing.T) {
 	}
 }
 
-func TestBoundingBox(t *testing.T) {
+func TestToRect(t *testing.T) {
 	x := Point{3.7, -2.4, 0.0}
 	tol := 0.05
-	rect := x.BoundingBox(tol)
+	rect := x.ToRect(tol)
 
 	p := Point{3.65, -2.45, -0.05}
 	q := Point{3.75, -2.35, 0.05}
 	d1, _ := Dist(p, rect.p)
 	d2, _ := Dist(q, rect.q)
 	if d1 > EPS || d2 > EPS {
-		t.Errorf("Expected %v.BoundingBox(%v) == %v, %v", x, tol, p, q)
+		t.Errorf("Expected %v.ToRect(%v) == %v, %v", x, tol, p, q)
 	}
 }
