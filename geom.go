@@ -131,3 +131,14 @@ func (r1 *Rect) OverlapsRect(r2 *Rect) (bool, error) {
 
 	return true, nil
 }
+
+// BoundingBox constructs a Rect containing p with side lengths 2*tol.
+func (p Point) BoundingBox(tol float64) *Rect {
+	dim := len(p)
+	a, b := make([]float64, dim), make([]float64, dim)
+	for i := range p {
+		a[i] = p[i] - tol
+		b[i] = p[i] + tol
+	}
+	return &Rect{a, b}
+}
