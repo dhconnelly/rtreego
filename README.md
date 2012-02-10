@@ -7,28 +7,22 @@ rtreego is a library for efficiently storing and querying spatial data in the
 Overview
 --------
 
-The classic R-tree is a popular and efficient data structure for storing and querying spatial objects [Gut84].  The variant implemented here, known as the R*-tree, improves performance and increases storage utilization with little implementation overhead, in addition to offering significant improvements when handling point objects [Beck90].  In addition to rectangle intersection queries (ie, bounding box queries), k-nearest-neighbor queries are also supported [Rous95].
+The [R-tree](http://en.wikipedia.org/wiki/R-tree) is a popular data structure for efficiently storing and querying spatial objects [Gut84].  It is often used for implementing geospatial indexes in database systems.  The variant implemented here, known as the R*-tree, improves performance and increases storage utilization with little implementation overhead, in addition to offering significant improvements when handling point objects [Beck90].  In addition to bounding box queries, k-nearest-neighbor queries are also supported [Rous95].
 
-The R*-tree is a dynamic data structure--insertions and deletions can be performed in any order.  Further, insertions and deletions trigger rebalancing automatically, so that no explicit rebalancing is required by the user.  Maximum tree height is guaranteed to be logarithmic in the number of entries, but there is no guarantee of good worst-case query performance; a number of heuristics are applied that perform well in practice.  For more details on these heuristics please refer to the references.
-
+R*-trees are balanced, so maximum tree height is guaranteed to be logarithmic in the number of entries; however, there is no guarantee of good query performance.  Instead, a number of heuristics are applied that perform well in practice.  For more details please refer to the references.
 
 Status
 ------
 
-rtreego is currently in initial stages of development and is not ready for use.
+rtreego is currently in the initial stages of development and is not ready for use.
 
 Usage
 -----
 
-
 Installation
 ------------
 
-Using a recently updated Go programming language (at least weekly.2012-01-27 11507), simply
-
-`go install github.com/dhconnelly/rtreego`
-
-Then `import "github.com/dhconnelly/rtreego"` in your source files.
+Assuming you're using a recent weekly build of Go (at least weekly.2012-01-27 11507), `go install github.com/dhconnelly/rtreego`.  Then `import "github.com/dhconnelly/rtreego"` in your source files.
 
 References
 ----------
@@ -40,4 +34,4 @@ References
 About
 -----
 
-This library is written and maintained by [Daniel Connelly](http://dhconnelly.com) and is released under a BSD-style license.  See the LICENSE file for more details.
+rtreego is written and maintained by [Daniel Connelly](http://dhconnelly.com) and is released under a BSD-style license.  See the LICENSE file for more details.
