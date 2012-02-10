@@ -132,7 +132,7 @@ func (r1 *Rect) OverlapsRect(r2 *Rect) (bool, error) {
 	return true, nil
 }
 
-// ToRect constructs a Rect containing p with side lengths 2*tol.
+// ToRect constructs a rectangle containing p with side lengths 2*tol.
 func (p Point) ToRect(tol float64) *Rect {
 	dim := len(p)
 	a, b := make([]float64, dim), make([]float64, dim)
@@ -141,4 +141,30 @@ func (p Point) ToRect(tol float64) *Rect {
 		b[i] = p[i] + tol
 	}
 	return &Rect{a, b}
+}
+
+// BoundingBox constructs the smallest rectangle containing both r1 and r2.
+func BoundingBox(r1, r2 *Rect) (*Rect, error) {
+	dim := len(r1.p)
+	if len(r2.p) != dim {
+		return nil, &DimError{dim, len(r2.p)}
+	}
+
+	p := make([]float64, dim)
+	lengths := make([]float64, dim)
+	for i := range p {
+		if r1.p[i] <= r2.p[i] {
+			p[i] = r1.p[i]
+		} else {
+			p[i] = r2.p[i]
+		}
+
+		if r1.q[i] <= r2.q[i] {
+			lengths[i] = r2.q[i] - p[i]
+		} else {
+			lengths[i] = r1.q[i] - p[i]
+		}
+	}
+	
+	return NewRect(p, lengths)
 }

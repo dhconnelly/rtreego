@@ -176,3 +176,40 @@ func TestToRect(t *testing.T) {
 		t.Errorf("Expected %v.ToRect(%v) == %v, %v", x, tol, p, q)
 	}
 }
+
+func TestBoundingBox(t *testing.T) {
+	p := Point{3.7, -2.4, 0.0}
+	lengths1 := []float64{1, 15, 3}
+	rect1, _ := NewRect(p, lengths1)
+	
+	q := Point{-6.5, 4.7, 2.5}
+	lengths2 := []float64{4, 5, 6}
+	rect2, _ := NewRect(q, lengths2)
+
+	r := Point{-6.5, -2.4, 0.0}
+	s := Point{4.7, 12.6, 8.5}
+
+	bb, _ := BoundingBox(rect1, rect2)
+	d1, _ := Dist(r, bb.p)
+	d2, _ := Dist(s, bb.q)
+	if d1 > EPS || d2 > EPS {
+		t.Errorf("BoundingBox(%v, %v) != %v, %v", rect1, rect2, r, s)
+	}
+}
+
+func TestBoundingBoxContains(t *testing.T) {
+	p := Point{3.7, -2.4, 0.0}
+	lengths1 := []float64{1, 15, 3}
+	rect1, _ := NewRect(p, lengths1)
+	
+	q := Point{4.0, 0.0, 1.5}
+	lengths2 := []float64{0.56, 6.222222, 0.946}
+	rect2, _ := NewRect(q, lengths2)
+
+	bb, _ := BoundingBox(rect1, rect2)
+	d1, _ := Dist(rect1.p, bb.p)
+	d2, _ := Dist(rect1.q, bb.q)
+	if d1 > EPS || d2 > EPS {
+		t.Errorf("BoundingBox(%v, %v) != %v", rect1, rect2, rect1)
+	}
+}
