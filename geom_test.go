@@ -75,19 +75,26 @@ func TestContainsPoint(t *testing.T) {
 	}
 
 	r := Point{4.5, -1.7, -3.2}
-	if yes, err := rect.ContainsPoint(r); yes || err != nil {
+	if yes, _ := rect.ContainsPoint(r); yes {
 		t.Errorf("Expected %v doesn't contain %v", rect, q)
 	}
 }
 
-func TestContainsPointDimError(t *testing.T) {
+func TestContainsRect(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
-	lengths := []float64{6.2, 1.1, 4.9}
-	rect, _ := NewRect(p, lengths)
+	lengths1 := []float64{6.2, 1.1, 4.9}
+	rect1, _ := NewRect(p, lengths1)
 
-	q := Point{4.5, -1.7}
-	_, err := rect.ContainsPoint(q)
-	if _, ok := err.(*DimError); !ok {
-		t.Errorf("Expected DimError on %v.ContainsPoint(%v)", rect, q)
+	q := Point{4.1, -1.9, 1.0}
+	lengths2 := []float64{3.2, 0.6, 3.7}
+	rect2, _ := NewRect(q, lengths2)
+	if yes, err := rect1.ContainsRect(rect2); !yes || err != nil {
+		t.Errorf("Expected %v.ContainsRect(%v", rect1, rect2)
+	}
+
+	lengths3 := []float64{3.2, 1.4, 3.7}
+	rect3, _ := NewRect(q, lengths3)
+	if yes, _ := rect1.ContainsRect(rect3); yes {
+		t.Errorf("Expected %v doesn't contain %v", rect1, rect3)
 	}
 }

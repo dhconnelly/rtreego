@@ -77,7 +77,7 @@ func NewRect(p Point, lengths []float64) (*Rect, error) {
 	return &Rect{p, q}, nil
 }
 
-// ContainsPoint tests whether p is located on or within the boundary of r.
+// ContainsPoint tests whether p is located inside or on the boundary of r.
 func (r *Rect) ContainsPoint(p Point) (bool, error) {
 	if len(p) != len(r.p) {
 		return false, &DimError{len(r.p), len(p)}
@@ -85,6 +85,22 @@ func (r *Rect) ContainsPoint(p Point) (bool, error) {
 
 	for i, a := range p {
 		if a < r.p[i] || a > r.q[i] {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+// ContainsRect tests whether r2 is is located inside r1.
+func (r1 *Rect) ContainsRect(r2 *Rect) (bool, error) {
+	if len(r1.p) != len(r2.p) {
+		return false, &DimError{len(r1.p), len(r2.p)}
+	}
+
+	for i, a1 := range r1.p {
+		b1, a2, b2 := r1.q[i], r2.p[i], r2.q[i]
+		if a1 > a2 || b2 > b1 {
 			return false, nil
 		}
 	}
