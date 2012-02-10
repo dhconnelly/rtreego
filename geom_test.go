@@ -115,7 +115,7 @@ func TestDoesNotContainRectDisjoint(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
 	lengths1 := []float64{6.2, 1.1, 4.9}
 	rect1, _ := NewRect(p, lengths1)
-	
+
 	q := Point{1.2, -19.6, -4.0}
 	lengths2 := []float64{2.2, 5.9, 0.5}
 	rect2, _ := NewRect(q, lengths2)

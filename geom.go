@@ -48,7 +48,7 @@ func Dist(p, q Point) (float64, error) {
 // Rect represents a subset of n-dimensional Euclidean space of the form
 // [a1, b1] x [a2, b2] x ... x [an, bn], where ai < bi for all 1 <= i <= n.
 type Rect struct {
-	p, q Point // p[i] <= q[i] for all i
+	p, q Point // Enforced by NewRect: p[i] <= q[i] for all i.
 }
 
 func (r *Rect) String() string {
@@ -84,6 +84,8 @@ func (r *Rect) ContainsPoint(p Point) (bool, error) {
 	}
 
 	for i, a := range p {
+		// p is contained in (or on) r if and only if p <= a <= q for
+		// every dimension.
 		if a < r.p[i] || a > r.q[i] {
 			return false, nil
 		}
@@ -100,6 +102,9 @@ func (r1 *Rect) ContainsRect(r2 *Rect) (bool, error) {
 
 	for i, a1 := range r1.p {
 		b1, a2, b2 := r1.q[i], r2.p[i], r2.q[i]
+		// enforced by constructor: a1 <= b1 and a2 <= b2.
+		// so containment holds if and only if a1 <= a2 <= b2 <= b1
+		// for every dimension.
 		if a1 > a2 || b2 > b1 {
 			return false, nil
 		}
@@ -116,6 +121,9 @@ func (r1 *Rect) OverlapsRect(r2 *Rect) (bool, error) {
 
 	for i, a1 := range r1.p {
 		b1, a2, b2 := r1.q[i], r2.p[i], r2.q[i]
+		// enforced by constructor: a1 <= b1 and a2 <= b2.
+		// so overlap occurs if and only if neither of the following
+		// situations occur: a2 <= b2 < a1 <= b1 or a1 <= b1 < a2 <= b2
 		if b2 < a1 || b1 < a2 {
 			return false, nil
 		}
