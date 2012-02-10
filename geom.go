@@ -107,3 +107,19 @@ func (r1 *Rect) ContainsRect(r2 *Rect) (bool, error) {
 
 	return true, nil
 }
+
+// OverlapsRect tests whether two rectangles have non-empty intersection.
+func (r1 *Rect) OverlapsRect(r2 *Rect) (bool, error) {
+	if len(r1.p) != len(r2.p) {
+		return false, &DimError{len(r1.p), len(r2.p)}
+	}
+
+	for i, a1 := range r1.p {
+		b1, a2, b2 := r1.q[i], r2.p[i], r2.q[i]
+		if b2 < a1 || b1 < a2 {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}

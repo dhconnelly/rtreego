@@ -43,7 +43,6 @@ func TestNewRect(t *testing.T) {
 	if d, _ := Dist(q, rect.q); d > EPS {
 		t.Errorf("Expected q == rect.q")
 	}
-
 }
 
 func TestNewRectDimMismatch(t *testing.T) {
@@ -73,9 +72,15 @@ func TestContainsPoint(t *testing.T) {
 	if yes, err := rect.ContainsPoint(q); !yes || err != nil {
 		t.Errorf("Expected %v contains %v", rect, q)
 	}
+}
 
-	r := Point{4.5, -1.7, -3.2}
-	if yes, _ := rect.ContainsPoint(r); yes {
+func TestDoesNotContainPoint(t *testing.T) {
+	p := Point{3.7, -2.4, 0.0}
+	lengths := []float64{6.2, 1.1, 4.9}
+	rect, _ := NewRect(p, lengths)
+
+	q := Point{4.5, -1.7, -3.2}
+	if yes, _ := rect.ContainsPoint(q); yes {
 		t.Errorf("Expected %v doesn't contain %v", rect, q)
 	}
 }
@@ -91,10 +96,69 @@ func TestContainsRect(t *testing.T) {
 	if yes, err := rect1.ContainsRect(rect2); !yes || err != nil {
 		t.Errorf("Expected %v.ContainsRect(%v", rect1, rect2)
 	}
+}
 
-	lengths3 := []float64{3.2, 1.4, 3.7}
-	rect3, _ := NewRect(q, lengths3)
-	if yes, _ := rect1.ContainsRect(rect3); yes {
-		t.Errorf("Expected %v doesn't contain %v", rect1, rect3)
+func TestDoesNotContainRectOverlaps(t *testing.T) {
+	p := Point{3.7, -2.4, 0.0}
+	lengths1 := []float64{6.2, 1.1, 4.9}
+	rect1, _ := NewRect(p, lengths1)
+
+	q := Point{4.1, -1.9, 1.0}
+	lengths2 := []float64{3.2, 1.4, 3.7}
+	rect2, _ := NewRect(q, lengths2)
+	if yes, _ := rect1.ContainsRect(rect2); yes {
+		t.Errorf("Expected %v doesn't contain %v", rect1, rect2)
+	}
+}
+
+func TestDoesNotContainRectDisjoint(t *testing.T) {
+	p := Point{3.7, -2.4, 0.0}
+	lengths1 := []float64{6.2, 1.1, 4.9}
+	rect1, _ := NewRect(p, lengths1)
+	
+	q := Point{1.2, -19.6, -4.0}
+	lengths2 := []float64{2.2, 5.9, 0.5}
+	rect2, _ := NewRect(q, lengths2)
+	if yes, _ := rect1.ContainsRect(rect2); yes {
+		t.Errorf("Expected %v doesn't contain %v", rect1, rect2)
+	}
+}
+
+func TestOverlapsRect(t *testing.T) {
+	p := Point{3.7, -2.4, 0.0}
+	lengths1 := []float64{6.2, 1.1, 4.9}
+	rect1, _ := NewRect(p, lengths1)
+
+	q := Point{2.5, -2.1, 2.4}
+	lengths2 := []float64{3.2, 0.6, 3.7}
+	rect2, _ := NewRect(q, lengths2)
+	if yes, err := rect1.OverlapsRect(rect2); !yes || err != nil {
+		t.Errorf("Expected %v.OverlapsRect(%v", rect1, rect2)
+	}
+}
+
+func TestOverlapsRectContained(t *testing.T) {
+	p := Point{3.7, -2.4, 0.0}
+	lengths1 := []float64{6.2, 1.1, 4.9}
+	rect1, _ := NewRect(p, lengths1)
+
+	q := Point{4.1, -1.9, 1.0}
+	lengths2 := []float64{3.2, 0.6, 3.7}
+	rect2, _ := NewRect(q, lengths2)
+	if yes, err := rect1.OverlapsRect(rect2); !yes || err != nil {
+		t.Errorf("Expected %v.OverlapsRect(%v)", rect1, rect2)
+	}
+}
+
+func TestDoesNotOverlapRect(t *testing.T) {
+	p := Point{3.7, -2.4, 0.0}
+	lengths1 := []float64{6.2, 1.1, 4.9}
+	rect1, _ := NewRect(p, lengths1)
+
+	q := Point{1.2, -19.6, -4.0}
+	lengths2 := []float64{2.2, 5.9, 0.5}
+	rect2, _ := NewRect(q, lengths2)
+	if yes, _ := rect1.OverlapsRect(rect2); yes {
+		t.Errorf("Expected %v doesn't overlap %v", rect1, rect2)
 	}
 }
