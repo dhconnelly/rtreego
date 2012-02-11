@@ -63,6 +63,17 @@ func TestNewRectDistError(t *testing.T) {
 	}
 }
 
+func TestRectSize(t *testing.T) {
+	p := Point{1.0, -2.5, 3.0}
+	lengths := []float64{2.5, 8.0, 1.5}
+	rect, _ := NewRect(p, lengths)
+	size := lengths[0] * lengths[1] * lengths[2]
+	actual := rect.Size()
+	if size != actual {
+		t.Errorf("Expected %v.Size() == %v, got %v", rect, size, actual)
+	}
+}
+
 func TestContainsPoint(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
 	lengths := []float64{6.2, 1.1, 4.9}

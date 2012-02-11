@@ -77,6 +77,16 @@ func NewRect(p Point, lengths []float64) (*Rect, error) {
 	return &Rect{p, q}, nil
 }
 
+// Size computes the measure of a rectangle (the product of its side lengths).
+func (r *Rect) Size() float64 {
+	size := 1.0
+	for i, a := range r.p {
+		b := r.q[i]
+		size *= b - a
+	}
+	return size
+}
+
 // ContainsPoint tests whether p is located inside or on the boundary of r.
 func (r *Rect) ContainsPoint(p Point) (bool, error) {
 	if len(p) != len(r.p) {
