@@ -58,7 +58,7 @@ func TestNewRectDistError(t *testing.T) {
 	p := Point{1.0, -2.5, 3.0}
 	lengths := []float64{2.5, -8.0, 1.5}
 	_, err := NewRect(p, lengths)
-	if _, ok := err.(*DistError); !ok {
+	if _, ok := err.(DistError); !ok {
 		t.Errorf("Expected DistError on NewRect(%v, %v)", p, lengths)
 	}
 }
@@ -203,7 +203,7 @@ func TestBoundingBox(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
 	lengths1 := []float64{1, 15, 3}
 	rect1, _ := NewRect(p, lengths1)
-	
+
 	q := Point{-6.5, 4.7, 2.5}
 	lengths2 := []float64{4, 5, 6}
 	rect2, _ := NewRect(q, lengths2)
@@ -223,7 +223,7 @@ func TestBoundingBoxContains(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
 	lengths1 := []float64{1, 15, 3}
 	rect1, _ := NewRect(p, lengths1)
-	
+
 	q := Point{4.0, 0.0, 1.5}
 	lengths2 := []float64{0.56, 6.222222, 0.946}
 	rect2, _ := NewRect(q, lengths2)

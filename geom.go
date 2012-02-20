@@ -20,12 +20,11 @@ func (err *DimError) Error() string {
 	return "rtreego: dimension mismatch"
 }
 
-// DistError represents a failure due to an improper distance.
-type DistError struct {
-	Dist float64
-}
+// DistError is an improper distance measurement.  It implements the error
+// and is generated when a distance-related assertion fails.
+type DistError float64
 
-func (err *DistError) Error() string {
+func (err DistError) Error() string {
 	return "rtreego: improper distance"
 }
 
@@ -70,7 +69,7 @@ func NewRect(p Point, lengths []float64) (*Rect, error) {
 	q := make([]float64, len(p))
 	for i := range p {
 		if lengths[i] <= 0 {
-			return nil, &DistError{lengths[i]}
+			return nil, DistError(lengths[i])
 		}
 		q[i] = p[i] + lengths[i]
 	}
@@ -96,12 +95,12 @@ func (r *Rect) Margin() float64 {
 	// The margin of the rectangle, then, is given by the formula
 	// 2^(n-1) * [(b1 - a1) + (b2 - a2) + ... + (bn - an)].
 	dim := len(r.p)
-	margin := 0.0
+	sum := 0.0
 	for i, a := range r.p {
 		b := r.q[i]
-		margin += (b - a)
+		sum += b - a
 	}
-	return math.Pow(2, float64(dim-1)) * margin
+	return math.Pow(2, float64(dim-1)) * sum
 }
 
 // ContainsPoint tests whether p is located inside or on the boundary of r.
@@ -192,7 +191,6 @@ func BoundingBox(r1, r2 *Rect) (*Rect, error) {
 			lengths[i] = r1.q[i] - p[i]
 		}
 	}
-	
+
 	return NewRect(p, lengths)
 }
-
