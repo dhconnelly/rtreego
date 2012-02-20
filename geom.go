@@ -87,6 +87,23 @@ func (r *Rect) Size() float64 {
 	return size
 }
 
+// Margin computes the sum of the edge lengths of a rectangle.
+func (r *Rect) Margin() float64 {
+	// The number of edges in an n-dimensional rectangle is n * 2^(n-1)
+	// (http://en.wikipedia.org/wiki/Hypercube_graph).  Thus the number
+	// of edges of length (ai - bi), where the rectangle is determined
+	// by p = (a1, a2, ..., an) and q = (b1, b2, ..., bn), is 2^(n-1).
+	// The margin of the rectangle, then, is given by the formula
+	// 2^(n-1) * [(b1 - a1) + (b2 - a2) + ... + (bn - an)].
+	dim := len(r.p)
+	margin := 0.0
+	for i, a := range r.p {
+		b := r.q[i]
+		margin += (b - a)
+	}
+	return math.Pow(2, float64(dim-1)) * margin
+}
+
 // ContainsPoint tests whether p is located inside or on the boundary of r.
 func (r *Rect) ContainsPoint(p Point) (bool, error) {
 	if len(p) != len(r.p) {
@@ -178,3 +195,4 @@ func BoundingBox(r1, r2 *Rect) (*Rect, error) {
 	
 	return NewRect(p, lengths)
 }
+

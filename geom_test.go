@@ -74,6 +74,17 @@ func TestRectSize(t *testing.T) {
 	}
 }
 
+func TestRectMargin(t *testing.T) {
+	p := Point{1.0, -2.5, 3.0}
+	lengths := []float64{2.5, 8.0, 1.5}
+	rect, _ := NewRect(p, lengths)
+	size := 4*2.5 + 4*8.0 + 4*1.5
+	actual := rect.Margin()
+	if size != actual {
+		t.Errorf("Expected %v.Margin() == %v, got %v", rect, size, actual)
+	}
+}
+
 func TestContainsPoint(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
 	lengths := []float64{6.2, 1.1, 4.9}
