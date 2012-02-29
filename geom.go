@@ -44,6 +44,12 @@ func Dist(p, q Point) (float64, error) {
 	return math.Sqrt(sum), nil
 }
 
+// MinDist computes the distance from a point to a rectangle.  If the point is
+// contained in the rectangle then the distance is zero.
+func MinDist(p Point, r *Rect) (float64, error) {
+	return 0, nil
+}
+
 // Rect represents a subset of n-dimensional Euclidean space of the form
 // [a1, b1] x [a2, b2] x ... x [an, bn], where ai < bi for all 1 <= i <= n.
 type Rect struct {

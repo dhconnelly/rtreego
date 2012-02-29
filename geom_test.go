@@ -313,3 +313,11 @@ func TestBoundingBoxContains(t *testing.T) {
 		t.Errorf("BoundingBox(%v, %v) != %v, got %v", rect1, rect2, rect1, bb)
 	}
 }
+
+func TestMinDistZero(t *testing.T) {
+	
+}
+
+func TestMinDistPositive(t *testing.T) {
+	
+}
