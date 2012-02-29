@@ -140,17 +140,27 @@ func (r1 *Rect) ContainsRect(r2 *Rect) (bool, error) {
 }
 
 // OverlapsRect tests whether two rectangles have non-empty intersection.
+// The overlap must have positive area in every dimension--just touching does
+// not count.
 func (r1 *Rect) OverlapsRect(r2 *Rect) (bool, error) {
 	if len(r1.p) != len(r2.p) {
 		return false, &DimError{len(r1.p), len(r2.p)}
 	}
 
+	// There's no overlap only in the following cases:
+	//
+	// 1. a1------b1
+	//                a2------b2
+	//
+	// 2.             a1------b1
+	//    a2------b2
+	//
+	// Enforced by constructor: a1 <= b1 and a2 <= b2.  So we can just
+	// check the endpoints.
+
 	for i, a1 := range r1.p {
 		b1, a2, b2 := r1.q[i], r2.p[i], r2.q[i]
-		// enforced by constructor: a1 <= b1 and a2 <= b2.
-		// so overlap occurs if and only if neither of the following
-		// situations occur: a2 <= b2 < a1 <= b1 or a1 <= b1 < a2 <= b2
-		if b2 < a1 || b1 < a2 {
+		if b2 <= a1 || b1 <= a2 {
 			return false, nil
 		}
 	}

@@ -115,6 +115,7 @@ func TestContainsRect(t *testing.T) {
 	q := Point{4.1, -1.9, 1.0}
 	lengths2 := []float64{3.2, 0.6, 3.7}
 	rect2, _ := NewRect(q, lengths2)
+	
 	if yes, err := rect1.ContainsRect(rect2); !yes || err != nil {
 		t.Errorf("Expected %v.ContainsRect(%v", rect1, rect2)
 	}
@@ -128,6 +129,7 @@ func TestDoesNotContainRectOverlaps(t *testing.T) {
 	q := Point{4.1, -1.9, 1.0}
 	lengths2 := []float64{3.2, 1.4, 3.7}
 	rect2, _ := NewRect(q, lengths2)
+	
 	if yes, _ := rect1.ContainsRect(rect2); yes {
 		t.Errorf("Expected %v doesn't contain %v", rect1, rect2)
 	}
@@ -141,6 +143,7 @@ func TestDoesNotContainRectDisjoint(t *testing.T) {
 	q := Point{1.2, -19.6, -4.0}
 	lengths2 := []float64{2.2, 5.9, 0.5}
 	rect2, _ := NewRect(q, lengths2)
+	
 	if yes, _ := rect1.ContainsRect(rect2); yes {
 		t.Errorf("Expected %v doesn't contain %v", rect1, rect2)
 	}
@@ -154,6 +157,7 @@ func TestOverlapsRect(t *testing.T) {
 	q := Point{2.5, -2.1, 2.4}
 	lengths2 := []float64{3.2, 0.6, 3.7}
 	rect2, _ := NewRect(q, lengths2)
+	
 	if yes, err := rect1.OverlapsRect(rect2); !yes || err != nil {
 		t.Errorf("Expected %v.OverlapsRect(%v", rect1, rect2)
 	}
@@ -167,6 +171,7 @@ func TestOverlapsRectContained(t *testing.T) {
 	q := Point{4.1, -1.9, 1.0}
 	lengths2 := []float64{3.2, 0.6, 3.7}
 	rect2, _ := NewRect(q, lengths2)
+	
 	if yes, err := rect1.OverlapsRect(rect2); !yes || err != nil {
 		t.Errorf("Expected %v.OverlapsRect(%v)", rect1, rect2)
 	}
@@ -180,6 +185,23 @@ func TestDoesNotOverlapRect(t *testing.T) {
 	q := Point{1.2, -19.6, -4.0}
 	lengths2 := []float64{2.2, 5.9, 0.5}
 	rect2, _ := NewRect(q, lengths2)
+	
+	if yes, _ := rect1.OverlapsRect(rect2); yes {
+		t.Errorf("Expected %v doesn't overlap %v", rect1, rect2)
+	}
+}
+
+func TestNoOverlapJustTouches(t *testing.T) {
+	p := Point{1, 2, 3}
+	lengths1 := []float64{1, 1, 1}
+	rect1, _ := NewRect(p, lengths1)
+	
+	q := Point{-1, -2, -3}
+	lengths2 := []float64{2.5, 4, 6.5}
+	rect2, _ := NewRect(q, lengths2)
+	
+	// rect1 and rect2 overlap in the first and third dimension, but only
+	// just touch in the second.
 	if yes, _ := rect1.OverlapsRect(rect2); yes {
 		t.Errorf("Expected %v doesn't overlap %v", rect1, rect2)
 	}
