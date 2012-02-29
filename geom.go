@@ -46,6 +46,7 @@ func Dist(p, q Point) (float64, error) {
 
 // MinDist computes the square of the distance from a point to a rectangle.
 // If the point is contained in the rectangle then the distance is zero.
+// Implemented per [RKV95], Definition 2.  See README.md for the reference.
 func MinDist(p Point, r *Rect) (float64, error) {
 	if len(p) != len(r.p) {
 		return 0, &DimError{len(p), len(r.p)}
