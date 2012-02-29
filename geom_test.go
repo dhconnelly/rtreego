@@ -185,6 +185,30 @@ func TestDoesNotOverlapRect(t *testing.T) {
 	}
 }
 
+func TestNoIntersection(t *testing.T) {
+	p := Point{3.7, -2.4, 0.0}
+	lengths1 := []float64{6.2, 1.1, 4.9}
+	rect1, _ := NewRect(p, lengths1)
+
+	q := Point{1.2, -19.6, -4.0}
+	lengths2 := []float64{2.2, 5.9, 0.5}
+	rect2, _ := NewRect(q, lengths2)
+
+	// rect1 and rect2 fail to overlap in just one dimension
+
+	if intersect, _ := rect1.Intersection(rect2); intersect != nil {
+		t.Errorf("Expected %v has nil intersection with  %v", rect1, rect2)
+	}
+}
+
+func TestContainmentIntersection(t *testing.T) {
+
+}
+
+func TestOverlapIntersection(t *testing.T) {
+
+}
+
 func TestToRect(t *testing.T) {
 	x := Point{3.7, -2.4, 0.0}
 	tol := 0.05
