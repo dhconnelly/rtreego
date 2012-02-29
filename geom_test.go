@@ -271,3 +271,20 @@ func TestBoundingBoxContains(t *testing.T) {
 		t.Errorf("BoundingBox(%v, %v) != %v, got %v", rect1, rect2, rect1, bb)
 	}
 }
+
+func TestMinDistZero(t *testing.T) {
+	p := Point{1, 2, 3}
+	r := p.ToRect(1)
+	if d, _ := MinDist(p, r); d > EPS {
+		t.Errorf("Expected MinDist(%v, %v) == 0, got %v", p, r, d)
+	}
+}
+
+func TestMinDistPositive(t *testing.T) {
+	p := Point{1, 2, 3}
+	r := &Rect{Point{-1, -4, 7}, Point{2, -2, 9}}
+	expected := float64((-2 - 2)*(-2 - 2) + (7 - 3)*(7 - 3))
+	if d, _ := MinDist(p, r); math.Abs(d - expected) > EPS {
+		t.Errorf("Expected MinDist(%v, %v) == %v, got %v", p, r, expected, d)
+	}
+}
