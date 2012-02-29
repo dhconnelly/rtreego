@@ -115,7 +115,7 @@ func TestContainsRect(t *testing.T) {
 	q := Point{4.1, -1.9, 1.0}
 	lengths2 := []float64{3.2, 0.6, 3.7}
 	rect2, _ := NewRect(q, lengths2)
-	
+
 	if yes, err := rect1.ContainsRect(rect2); !yes || err != nil {
 		t.Errorf("Expected %v.ContainsRect(%v", rect1, rect2)
 	}
@@ -129,7 +129,7 @@ func TestDoesNotContainRectOverlaps(t *testing.T) {
 	q := Point{4.1, -1.9, 1.0}
 	lengths2 := []float64{3.2, 1.4, 3.7}
 	rect2, _ := NewRect(q, lengths2)
-	
+
 	if yes, _ := rect1.ContainsRect(rect2); yes {
 		t.Errorf("Expected %v doesn't contain %v", rect1, rect2)
 	}
@@ -143,7 +143,7 @@ func TestDoesNotContainRectDisjoint(t *testing.T) {
 	q := Point{1.2, -19.6, -4.0}
 	lengths2 := []float64{2.2, 5.9, 0.5}
 	rect2, _ := NewRect(q, lengths2)
-	
+
 	if yes, _ := rect1.ContainsRect(rect2); yes {
 		t.Errorf("Expected %v doesn't contain %v", rect1, rect2)
 	}
@@ -283,8 +283,8 @@ func TestMinDistZero(t *testing.T) {
 func TestMinDistPositive(t *testing.T) {
 	p := Point{1, 2, 3}
 	r := &Rect{Point{-1, -4, 7}, Point{2, -2, 9}}
-	expected := float64((-2 - 2)*(-2 - 2) + (7 - 3)*(7 - 3))
-	if d, _ := MinDist(p, r); math.Abs(d - expected) > EPS {
+	expected := float64((-2-2)*(-2-2) + (7-3)*(7-3))
+	if d, _ := MinDist(p, r); math.Abs(d-expected) > EPS {
 		t.Errorf("Expected MinDist(%v, %v) == %v, got %v", p, r, expected, d)
 	}
 }

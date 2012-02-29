@@ -50,15 +50,15 @@ func MinDist(p Point, r *Rect) (float64, error) {
 	if len(p) != len(r.p) {
 		return 0, &DimError{len(p), len(r.p)}
 	}
-	
+
 	sum := 0.0
 	for i, pi := range p {
 		if pi < r.p[i] {
 			d := pi - r.p[i]
-			sum += d*d
+			sum += d * d
 		} else if pi > r.q[i] {
 			d := pi - r.q[i]
-			sum += d*d
+			sum += d * d
 		} else {
 			sum += 0
 		}
