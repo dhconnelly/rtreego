@@ -207,6 +207,62 @@ func TestNoOverlapJustTouches(t *testing.T) {
 	}
 }
 
+func TestNoIntersection(t *testing.T) {
+	p := Point{1, 2, 3}
+	lengths1 := []float64{1, 1, 1}
+	rect1, _ := NewRect(p, lengths1)
+
+	q := Point{-1, -2, -3}
+	lengths2 := []float64{2.5, 3, 6.5}
+	rect2, _ := NewRect(q, lengths2)
+
+	// rect1 and rect2 fail to overlap in just one dimension (second)
+
+	if intersect, _ := rect1.Intersect(rect2); intersect != nil {
+		t.Errorf("Expected %v.Intersect(%v) == nil, got %v", rect1, rect2, intersect)
+	}
+}
+
+func TestContainmentIntersection(t *testing.T) {
+	p := Point{1, 2, 3}
+	lengths1 := []float64{1, 1, 1}
+	rect1, _ := NewRect(p, lengths1)
+
+	q := Point{1, 2.2, 3.3}
+	lengths2 := []float64{0.5, 0.5, 0.5}
+	rect2, _ := NewRect(q, lengths2)
+
+	r := Point{1, 2.2, 3.3}
+	s := Point{1.5, 2.7, 3.8}
+
+	actual, _ := rect1.Intersect(rect2)
+	d1, _ := Dist(r, actual.p)
+	d2, _ := Dist(s, actual.q)
+	if d1 > EPS || d2 > EPS {
+		t.Errorf("%v.Intersect(%v) != %v, %v, got %v", rect1, rect2, r, s, actual)
+	}
+}
+
+func TestOverlapIntersection(t *testing.T) {
+	p := Point{1, 2, 3}
+	lengths1 := []float64{1, 2.5, 1}
+	rect1, _ := NewRect(p, lengths1)
+
+	q := Point{1, 4, -3}
+	lengths2 := []float64{3, 2, 6.5}
+	rect2, _ := NewRect(q, lengths2)
+
+	r := Point{1, 4, 3}
+	s := Point{2, 4.5, 3.5}
+
+	actual, _ := rect1.Intersect(rect2)
+	d1, _ := Dist(r, actual.p)
+	d2, _ := Dist(s, actual.q)
+	if d1 > EPS || d2 > EPS {
+		t.Errorf("%v.Intersect(%v) != %v, %v, got %v", rect1, rect2, r, s, actual)
+	}
+}
+
 func TestToRect(t *testing.T) {
 	x := Point{3.7, -2.4, 0.0}
 	tol := 0.05
@@ -217,7 +273,7 @@ func TestToRect(t *testing.T) {
 	d1, _ := Dist(p, rect.p)
 	d2, _ := Dist(q, rect.q)
 	if d1 > EPS || d2 > EPS {
-		t.Errorf("Expected %v.ToRect(%v) == %v, %v", x, tol, p, q)
+		t.Errorf("Expected %v.ToRect(%v) == %v, %v, got %v", x, tol, p, q, rect)
 	}
 }
 
@@ -237,7 +293,7 @@ func TestBoundingBox(t *testing.T) {
 	d1, _ := Dist(r, bb.p)
 	d2, _ := Dist(s, bb.q)
 	if d1 > EPS || d2 > EPS {
-		t.Errorf("BoundingBox(%v, %v) != %v, %v", rect1, rect2, r, s)
+		t.Errorf("BoundingBox(%v, %v) != %v, %v, got %v", rect1, rect2, r, s, bb)
 	}
 }
 
@@ -254,6 +310,6 @@ func TestBoundingBoxContains(t *testing.T) {
 	d1, _ := Dist(rect1.p, bb.p)
 	d2, _ := Dist(rect1.q, bb.q)
 	if d1 > EPS || d2 > EPS {
-		t.Errorf("BoundingBox(%v, %v) != %v", rect1, rect2, rect1)
+		t.Errorf("BoundingBox(%v, %v) != %v, got %v", rect1, rect2, rect1, bb)
 	}
 }
