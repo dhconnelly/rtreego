@@ -139,49 +139,14 @@ func (r1 *Rect) ContainsRect(r2 *Rect) (bool, error) {
 	return true, nil
 }
 
-// OverlapsRect tests whether two rectangles have non-empty intersection.
-// The overlap must have positive area in every dimension--just touching does
-// not count.
-func (r1 *Rect) OverlapsRect(r2 *Rect) (bool, error) {
-	if len(r1.p) != len(r2.p) {
-		return false, &DimError{len(r1.p), len(r2.p)}
-	}
-
-	// There's no overlap only in the following cases:
-	//
-	// 1. a1------b1
-	//                a2------b2
-	//
-	// 2.             a1------b1
-	//    a2------b2
-	//
-	// Enforced by constructor: a1 <= b1 and a2 <= b2.  So we can just
-	// check the endpoints.
-
-	for i, a1 := range r1.p {
-		b1, a2, b2 := r1.q[i], r2.p[i], r2.q[i]
-		if b2 <= a1 || b1 <= a2 {
-			return false, nil
-		}
-	}
-
-	return true, nil
-}
-
-// Intersect computes the intersection of two rectangles.
-func (r1 *Rect) Intersect(r2 *Rect) (*Rect, error) {
+// Intersect computes the intersection of two rectangles.  If no intersection
+// exists, the intersection is nil.
+func Intersect(r1, r2 *Rect) (*Rect, error) {
 	dim := len(r1.p)
 	if len(r2.p) != dim {
 		return nil, &DimError{dim, len(r2.p)}
 	}
 
-	if yes, _ := r1.OverlapsRect(r2); !yes {
-		return nil, nil
-	}
-	
-	// Since we just tested for overlap, we can go ahead and assume the
-	// intersection is non-empty.
-	//
 	// There are four cases of overlap:
 	//
 	// 1.  a1------------b1
@@ -200,10 +165,24 @@ func (r1 *Rect) Intersect(r2 *Rect) (*Rect, error) {
 	//     a2-----------------b2
 	//          p--------q
 	//
+	// Thus there are only two cases of non-overlap:
+	//
+	// 1. a1------b1
+	//                a2------b2
+	//
+	// 2.             a1------b1
+	//    a2------b2
+	//
+	// Enforced by constructor: a1 <= b1 and a2 <= b2.  So we can just
+	// check the endpoints.
+
 	p := make([]float64, dim)
 	q := make([]float64, dim)
 	for i := range p {
 		a1, b1, a2, b2 := r1.p[i], r1.q[i], r2.p[i], r2.q[i]
+		if b2 <= a1 || b1 <= a2 {
+			return nil, nil
+		}
 		p[i] = math.Max(a1, a2)
 		q[i] = math.Min(b1, b2)
 	}

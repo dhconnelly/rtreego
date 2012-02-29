@@ -149,64 +149,6 @@ func TestDoesNotContainRectDisjoint(t *testing.T) {
 	}
 }
 
-func TestOverlapsRect(t *testing.T) {
-	p := Point{3.7, -2.4, 0.0}
-	lengths1 := []float64{6.2, 1.1, 4.9}
-	rect1, _ := NewRect(p, lengths1)
-
-	q := Point{2.5, -2.1, 2.4}
-	lengths2 := []float64{3.2, 0.6, 3.7}
-	rect2, _ := NewRect(q, lengths2)
-	
-	if yes, err := rect1.OverlapsRect(rect2); !yes || err != nil {
-		t.Errorf("Expected %v.OverlapsRect(%v", rect1, rect2)
-	}
-}
-
-func TestOverlapsRectContained(t *testing.T) {
-	p := Point{3.7, -2.4, 0.0}
-	lengths1 := []float64{6.2, 1.1, 4.9}
-	rect1, _ := NewRect(p, lengths1)
-
-	q := Point{4.1, -1.9, 1.0}
-	lengths2 := []float64{3.2, 0.6, 3.7}
-	rect2, _ := NewRect(q, lengths2)
-	
-	if yes, err := rect1.OverlapsRect(rect2); !yes || err != nil {
-		t.Errorf("Expected %v.OverlapsRect(%v)", rect1, rect2)
-	}
-}
-
-func TestDoesNotOverlapRect(t *testing.T) {
-	p := Point{3.7, -2.4, 0.0}
-	lengths1 := []float64{6.2, 1.1, 4.9}
-	rect1, _ := NewRect(p, lengths1)
-
-	q := Point{1.2, -19.6, -4.0}
-	lengths2 := []float64{2.2, 5.9, 0.5}
-	rect2, _ := NewRect(q, lengths2)
-	
-	if yes, _ := rect1.OverlapsRect(rect2); yes {
-		t.Errorf("Expected %v doesn't overlap %v", rect1, rect2)
-	}
-}
-
-func TestNoOverlapJustTouches(t *testing.T) {
-	p := Point{1, 2, 3}
-	lengths1 := []float64{1, 1, 1}
-	rect1, _ := NewRect(p, lengths1)
-	
-	q := Point{-1, -2, -3}
-	lengths2 := []float64{2.5, 4, 6.5}
-	rect2, _ := NewRect(q, lengths2)
-	
-	// rect1 and rect2 overlap in the first and third dimension, but only
-	// just touch in the second.
-	if yes, _ := rect1.OverlapsRect(rect2); yes {
-		t.Errorf("Expected %v doesn't overlap %v", rect1, rect2)
-	}
-}
-
 func TestNoIntersection(t *testing.T) {
 	p := Point{1, 2, 3}
 	lengths1 := []float64{1, 1, 1}
@@ -218,8 +160,24 @@ func TestNoIntersection(t *testing.T) {
 
 	// rect1 and rect2 fail to overlap in just one dimension (second)
 
-	if intersect, _ := rect1.Intersect(rect2); intersect != nil {
-		t.Errorf("Expected %v.Intersect(%v) == nil, got %v", rect1, rect2, intersect)
+	if intersect, _ := Intersect(rect1, rect2); intersect != nil {
+		t.Errorf("Expected Intersect(%v, %v) == nil, got %v", rect1, rect2, intersect)
+	}
+}
+
+func TestNoIntersectionJustTouches(t *testing.T) {
+	p := Point{1, 2, 3}
+	lengths1 := []float64{1, 1, 1}
+	rect1, _ := NewRect(p, lengths1)
+
+	q := Point{-1, -2, -3}
+	lengths2 := []float64{2.5, 4, 6.5}
+	rect2, _ := NewRect(q, lengths2)
+
+	// rect1 and rect2 fail to overlap in just one dimension (second)
+
+	if intersect, _ := Intersect(rect1, rect2); intersect != nil {
+		t.Errorf("Expected Intersect(%v, %v) == nil, got %v", rect1, rect2, intersect)
 	}
 }
 
@@ -235,11 +193,11 @@ func TestContainmentIntersection(t *testing.T) {
 	r := Point{1, 2.2, 3.3}
 	s := Point{1.5, 2.7, 3.8}
 
-	actual, _ := rect1.Intersect(rect2)
+	actual, _ := Intersect(rect1, rect2)
 	d1, _ := Dist(r, actual.p)
 	d2, _ := Dist(s, actual.q)
 	if d1 > EPS || d2 > EPS {
-		t.Errorf("%v.Intersect(%v) != %v, %v, got %v", rect1, rect2, r, s, actual)
+		t.Errorf("Intersect(%v, %v) != %v, %v, got %v", rect1, rect2, r, s, actual)
 	}
 }
 
@@ -255,11 +213,11 @@ func TestOverlapIntersection(t *testing.T) {
 	r := Point{1, 4, 3}
 	s := Point{2, 4.5, 3.5}
 
-	actual, _ := rect1.Intersect(rect2)
+	actual, _ := Intersect(rect1, rect2)
 	d1, _ := Dist(r, actual.p)
 	d2, _ := Dist(s, actual.q)
 	if d1 > EPS || d2 > EPS {
-		t.Errorf("%v.Intersect(%v) != %v, %v, got %v", rect1, rect2, r, s, actual)
+		t.Errorf("Intersect(%v, %v) != %v, %v, got %v", rect1, rect2, r, s, actual)
 	}
 }
 
