@@ -67,6 +67,56 @@ func MinDist(p Point, r *Rect) (float64, error) {
 	return sum, nil
 }
 
+// MinMaxDist computes the minimum of the maximum distances from p to points
+// on r.  If r is the bounding box of some geometric objects, then there is
+// at least one object contained in r within MinMaxDist(p, r) of p.
+// Implemented per [RKV95], Definition 4.  See README.md for the reference.
+func MinMaxDist(p Point, r *Rect) (float64, error) {
+	if len(p) != len(r.p) {
+		return 0, &DimError{len(p), len(r.p)}
+	}
+
+	// by definition, MinMaxDist(p, r) =
+	// min{1<=k<=n}(|pk - rmk|^2 + sum{1<=i<=n, i != k}(|pi - rMi|^2))
+	// where rmk and rMk are defined as follows:
+
+	rm := func (k int) float64 {
+		if p[k] <= (r.p[k] + r.q[k]) / 2 {
+			return r.p[k]
+		}
+		return r.q[k]
+	}
+
+	rM := func (k int) float64 {
+		if p[k] >= (r.p[k] + r.q[k]) / 2 {
+			return r.p[k]
+		}
+		return r.q[k]
+	}
+
+	// This formula can be computed in linear time by precomputing
+	// S = sum{1<=i<=n}(|pi - rMi|^2).
+
+	S := 0.0
+	for i := range p {
+		d := p[i] - rM(i)
+		S += d*d
+	}
+
+	// Compute MinMaxDist using the precomputed S.
+	min := math.MaxFloat64
+	for k := range p {
+		d1 := p[k] - rM(k)
+		d2 := p[k] - rm(k)
+		d := S - d1*d1 + d2*d2
+		if d < min {
+			min = d
+		}
+	}
+
+	return min, nil
+}
+
 // Rect represents a subset of n-dimensional Euclidean space of the form
 // [a1, b1] x [a2, b2] x ... x [an, bn], where ai < bi for all 1 <= i <= n.
 type Rect struct {

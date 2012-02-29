@@ -284,7 +284,27 @@ func TestMinDistPositive(t *testing.T) {
 	p := Point{1, 2, 3}
 	r := &Rect{Point{-1, -4, 7}, Point{2, -2, 9}}
 	expected := float64((-2-2)*(-2-2) + (7-3)*(7-3))
-	if d, _ := MinDist(p, r); math.Abs(d-expected) > EPS {
+	if d, _ := MinDist(p, r); math.Abs(d - expected) > EPS {
 		t.Errorf("Expected MinDist(%v, %v) == %v, got %v", p, r, expected, d)
+	}
+}
+
+func TestMinMaxDist(t *testing.T) {
+	p := Point{-3, -2, -1}
+	r := &Rect{Point{0, 0, 0}, Point{1, 2, 3}}
+
+	// furthest points from p on the faces closest to p in each dimension
+	q1 := Point{0, 2, 3}
+	q2 := Point{1, 0, 3}
+	q3 := Point{1, 2, 0}
+
+	// find the closest distance from p to one of these furthest points
+	d1, _ := Dist(p, q1)
+	d2, _ := Dist(p, q2)
+	d3, _ := Dist(p, q3)
+	expected := math.Min(d1*d1, math.Min(d2*d2, d3*d3))
+
+	if d, _ := MinMaxDist(p, r); math.Abs(d - expected) > EPS {
+		t.Errorf("Expected MinMaxDist(%v, %v) == %v, got %v", p, r, expected, d)
 	}
 }
