@@ -158,8 +158,8 @@ func (r1 *Rect) OverlapsRect(r2 *Rect) (bool, error) {
 	return true, nil
 }
 
-// Intersection computes the intersection of two rectangles.
-func (r1 *Rect) Intersection(r2 *Rect) (*Rect, error) {
+// Intersect computes the intersection of two rectangles.
+func (r1 *Rect) Intersect(r2 *Rect) (*Rect, error) {
 	dim := len(r1.p)
 	if len(r2.p) != dim {
 		return nil, &DimError{dim, len(r2.p)}
@@ -192,8 +192,8 @@ func (r1 *Rect) Intersection(r2 *Rect) (*Rect, error) {
 	//
 	p := make([]float64, dim)
 	q := make([]float64, dim)
-	for i, a1 := range p {
-		b1, a2, b2 := r1.q[i], r2.p[i], r2.q[i]
+	for i := range p {
+		a1, b1, a2, b2 := r1.p[i], r1.q[i], r2.p[i], r2.q[i]
 		p[i] = math.Max(a1, a2)
 		q[i] = math.Min(b1, b2)
 	}
