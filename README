@@ -1,0 +1,57 @@
+rtreego
+
+## ABOUT
+
+rtreego is a library for efficiently storing and querying spatial data
+in the Go programming language.
+
+The R-tree is a popular data structure for efficiently storing and
+querying spatial objects; one common use is implementing geospatial
+indexes in database management systems.  The variant implemented here,
+known as the R*-tree, improves performance and increases storage
+utilization.  Both bounding-box queries and k-nearest-neighbor queries
+are supported.
+
+R-trees are balanced, so maximum tree height is guaranteed to be
+logarithmic in the number of entries; however, good worst-case
+performance is not guaranteed.  Instead, a number of rebalancing
+heuristics are applied that perform well in practice.  For more
+details please refer to the references.
+
+## STATUS
+
+rtreego is currently in the initial stages of development and is not
+ready for use.
+
+## INSTALL
+
+go get github.com/dhconnelly/rtreego
+go install github.com/dhconnelly/rtreego
+
+## USAGE
+
+Not yet.
+
+## REFERENCES
+
+- A. Guttman.  R-trees: A Dynamic Index Structure for Spatial Searching.
+  Proceedings of ACM SIGMOD, pages 47-57, 1984.
+  http://www.cs.jhu.edu/~misha/ReadingSeminar/Papers/Guttman84.pdf
+  
+- N. Beckmann, H .P. Kriegel, R. Schneider and B. Seeger.  The R*-tree: An
+  Efficient and Robust Access Method for Points and Rectangles.  Proceedings
+  of ACM SIGMOD, pages 323-331, May 1990.
+  http://infolab.usc.edu/csci587/Fall2011/papers/p322-beckmann.pdf
+  
+- N. Roussopoulos, S. Kelley and F. Vincent.  Nearest Neighbor Queries.  ACM
+  SIGMOD, pages 71-79, 1995.
+  http://www.postgis.org/support/nearestneighbor.pdf
+
+## AUTHOR
+
+rtreego is written and maintained by Daniel Connelly.  You can find my stuff
+at dhconnelly.com.
+
+## LICENSE
+  
+rtreego is released under a BSD-style license; see LICENSE for more details.
