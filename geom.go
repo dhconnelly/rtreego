@@ -32,7 +32,7 @@ func (err DistError) Error() string {
 type Point []float64
 
 // Dist computes the Euclidean distance between two points p and q.
-func Dist(p, q Point) (float64, error) {
+func (p Point) Dist(q Point) (float64, error) {
 	if len(p) != len(q) {
 		return 0, &DimError{len(p), len(q)}
 	}
@@ -48,7 +48,7 @@ func Dist(p, q Point) (float64, error) {
 // If the point is contained in the rectangle then the distance is zero.
 // Implemented per Definition 2 of "Nearest Neighbor Queries" by
 // N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
-func MinDist(p Point, r *Rect) (float64, error) {
+func (p Point) MinDist(r *Rect) (float64, error) {
 	if len(p) != len(r.p) {
 		return 0, &DimError{len(p), len(r.p)}
 	}
@@ -73,7 +73,7 @@ func MinDist(p Point, r *Rect) (float64, error) {
 // at least one object contained in r within MinMaxDist(p, r) of p.
 // Implemented per Definition 4 of "Nearest Neighbor Queries" by
 // N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
-func MinMaxDist(p Point, r *Rect) (float64, error) {
+func (p Point) MinMaxDist(r *Rect) (float64, error) {
 	if len(p) != len(r.p) {
 		return 0, &DimError{len(p), len(r.p)}
 	}

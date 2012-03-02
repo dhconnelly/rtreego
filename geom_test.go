@@ -15,7 +15,7 @@ func TestDist(t *testing.T) {
 	p := Point{1, 2, 3}
 	q := Point{4, 5, 6}
 	dist := math.Sqrt(27)
-	if d, err := Dist(p, q); err != nil || d != dist {
+	if d, err := p.Dist(q); err != nil || d != dist {
 		t.Errorf("Dist(%v, %v) = %v; expected %v", p, q, d, dist)
 	}
 }
@@ -23,7 +23,7 @@ func TestDist(t *testing.T) {
 func TestDistDimMismatch(t *testing.T) {
 	p := Point{1, 2, 3}
 	r := Point{7, 8}
-	if d, err := Dist(p, r); d != 0 || err == nil {
+	if d, err := p.Dist(r); d != 0 || err == nil {
 		t.Errorf("Expected failure on Dist(%v, %v); got %v", p, r, d)
 	}
 }
@@ -37,10 +37,10 @@ func TestNewRect(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error on NewRect(%v, %v): %v", p, lengths, err)
 	}
-	if d, _ := Dist(p, rect.p); d > EPS {
+	if d, _ := p.Dist(rect.p); d > EPS {
 		t.Errorf("Expected p == rect.p")
 	}
-	if d, _ := Dist(q, rect.q); d > EPS {
+	if d, _ := q.Dist(rect.q); d > EPS {
 		t.Errorf("Expected q == rect.q")
 	}
 }
@@ -194,8 +194,8 @@ func TestContainmentIntersection(t *testing.T) {
 	s := Point{1.5, 2.7, 3.8}
 
 	actual, _ := Intersect(rect1, rect2)
-	d1, _ := Dist(r, actual.p)
-	d2, _ := Dist(s, actual.q)
+	d1, _ := r.Dist(actual.p)
+	d2, _ := s.Dist(actual.q)
 	if d1 > EPS || d2 > EPS {
 		t.Errorf("Intersect(%v, %v) != %v, %v, got %v", rect1, rect2, r, s, actual)
 	}
@@ -214,8 +214,8 @@ func TestOverlapIntersection(t *testing.T) {
 	s := Point{2, 4.5, 3.5}
 
 	actual, _ := Intersect(rect1, rect2)
-	d1, _ := Dist(r, actual.p)
-	d2, _ := Dist(s, actual.q)
+	d1, _ := r.Dist(actual.p)
+	d2, _ := s.Dist(actual.q)
 	if d1 > EPS || d2 > EPS {
 		t.Errorf("Intersect(%v, %v) != %v, %v, got %v", rect1, rect2, r, s, actual)
 	}
@@ -228,8 +228,8 @@ func TestToRect(t *testing.T) {
 
 	p := Point{3.65, -2.45, -0.05}
 	q := Point{3.75, -2.35, 0.05}
-	d1, _ := Dist(p, rect.p)
-	d2, _ := Dist(q, rect.q)
+	d1, _ := p.Dist(rect.p)
+	d2, _ := q.Dist(rect.q)
 	if d1 > EPS || d2 > EPS {
 		t.Errorf("Expected %v.ToRect(%v) == %v, %v, got %v", x, tol, p, q, rect)
 	}
@@ -248,8 +248,8 @@ func TestBoundingBox(t *testing.T) {
 	s := Point{4.7, 12.6, 8.5}
 
 	bb, _ := BoundingBox(rect1, rect2)
-	d1, _ := Dist(r, bb.p)
-	d2, _ := Dist(s, bb.q)
+	d1, _ := r.Dist(bb.p)
+	d2, _ := s.Dist(bb.q)
 	if d1 > EPS || d2 > EPS {
 		t.Errorf("BoundingBox(%v, %v) != %v, %v, got %v", rect1, rect2, r, s, bb)
 	}
@@ -265,8 +265,8 @@ func TestBoundingBoxContains(t *testing.T) {
 	rect2, _ := NewRect(q, lengths2)
 
 	bb, _ := BoundingBox(rect1, rect2)
-	d1, _ := Dist(rect1.p, bb.p)
-	d2, _ := Dist(rect1.q, bb.q)
+	d1, _ := rect1.p.Dist(bb.p)
+	d2, _ := rect1.q.Dist(bb.q)
 	if d1 > EPS || d2 > EPS {
 		t.Errorf("BoundingBox(%v, %v) != %v, got %v", rect1, rect2, rect1, bb)
 	}
@@ -275,8 +275,8 @@ func TestBoundingBoxContains(t *testing.T) {
 func TestMinDistZero(t *testing.T) {
 	p := Point{1, 2, 3}
 	r := p.ToRect(1)
-	if d, _ := MinDist(p, r); d > EPS {
-		t.Errorf("Expected MinDist(%v, %v) == 0, got %v", p, r, d)
+	if d, _ := p.MinDist(r); d > EPS {
+		t.Errorf("Expected %v.MinDist(%v) == 0, got %v", p, r, d)
 	}
 }
 
@@ -284,8 +284,8 @@ func TestMinDistPositive(t *testing.T) {
 	p := Point{1, 2, 3}
 	r := &Rect{Point{-1, -4, 7}, Point{2, -2, 9}}
 	expected := float64((-2-2)*(-2-2) + (7-3)*(7-3))
-	if d, _ := MinDist(p, r); math.Abs(d - expected) > EPS {
-		t.Errorf("Expected MinDist(%v, %v) == %v, got %v", p, r, expected, d)
+	if d, _ := p.MinDist(r); math.Abs(d - expected) > EPS {
+		t.Errorf("Expected %v.MinDist(%v) == %v, got %v", p, r, expected, d)
 	}
 }
 
@@ -299,12 +299,12 @@ func TestMinMaxDist(t *testing.T) {
 	q3 := Point{1, 2, 0}
 
 	// find the closest distance from p to one of these furthest points
-	d1, _ := Dist(p, q1)
-	d2, _ := Dist(p, q2)
-	d3, _ := Dist(p, q3)
+	d1, _ := p.Dist(q1)
+	d2, _ := p.Dist(q2)
+	d3, _ := p.Dist(q3)
 	expected := math.Min(d1*d1, math.Min(d2*d2, d3*d3))
 
-	if d, _ := MinMaxDist(p, r); math.Abs(d - expected) > EPS {
-		t.Errorf("Expected MinMaxDist(%v, %v) == %v, got %v", p, r, expected, d)
+	if d, _ := p.MinMaxDist(r); math.Abs(d - expected) > EPS {
+		t.Errorf("Expected %v.MinMaxDist(%v) == %v, got %v", p, r, expected, d)
 	}
 }
