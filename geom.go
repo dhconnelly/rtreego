@@ -46,6 +46,7 @@ func (p Point) Dist(q Point) (float64, error) {
 
 // MinDist computes the square of the distance from a point to a rectangle.
 // If the point is contained in the rectangle then the distance is zero.
+//
 // Implemented per Definition 2 of "Nearest Neighbor Queries" by
 // N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
 func (p Point) MinDist(r *Rect) (float64, error) {
@@ -71,6 +72,7 @@ func (p Point) MinDist(r *Rect) (float64, error) {
 // MinMaxDist computes the minimum of the maximum distances from p to points
 // on r.  If r is the bounding box of some geometric objects, then there is
 // at least one object contained in r within MinMaxDist(p, r) of p.
+//
 // Implemented per Definition 4 of "Nearest Neighbor Queries" by
 // N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
 func (p Point) MinMaxDist(r *Rect) (float64, error) {
@@ -82,15 +84,15 @@ func (p Point) MinMaxDist(r *Rect) (float64, error) {
 	// min{1<=k<=n}(|pk - rmk|^2 + sum{1<=i<=n, i != k}(|pi - rMi|^2))
 	// where rmk and rMk are defined as follows:
 
-	rm := func (k int) float64 {
-		if p[k] <= (r.p[k] + r.q[k]) / 2 {
+	rm := func(k int) float64 {
+		if p[k] <= (r.p[k]+r.q[k])/2 {
 			return r.p[k]
 		}
 		return r.q[k]
 	}
 
-	rM := func (k int) float64 {
-		if p[k] >= (r.p[k] + r.q[k]) / 2 {
+	rM := func(k int) float64 {
+		if p[k] >= (r.p[k]+r.q[k])/2 {
 			return r.p[k]
 		}
 		return r.q[k]
@@ -102,7 +104,7 @@ func (p Point) MinMaxDist(r *Rect) (float64, error) {
 	S := 0.0
 	for i := range p {
 		d := p[i] - rM(i)
-		S += d*d
+		S += d * d
 	}
 
 	// Compute MinMaxDist using the precomputed S.
@@ -167,6 +169,7 @@ func (r *Rect) Margin() float64 {
 	// (http://en.wikipedia.org/wiki/Hypercube_graph).  Thus the number
 	// of edges of length (ai - bi), where the rectangle is determined
 	// by p = (a1, a2, ..., an) and q = (b1, b2, ..., bn), is 2^(n-1).
+	//
 	// The margin of the rectangle, then, is given by the formula
 	// 2^(n-1) * [(b1 - a1) + (b2 - a2) + ... + (bn - an)].
 	dim := len(r.p)
@@ -224,29 +227,29 @@ func Intersect(r1, r2 *Rect) (*Rect, error) {
 
 	// There are four cases of overlap:
 	//
-	// 1.  a1------------b1
-	//          a2------------b2
-	//          p--------q
+	//     1.  a1------------b1
+	//              a2------------b2
+	//              p--------q
 	//
-	// 2.       a1------------b1
-	//     a2------------b2
-	//          p--------q
+	//     2.       a1------------b1
+	//         a2------------b2
+	//              p--------q
 	//
-	// 3.  a1-----------------b1
-	//          a2-------b2
-	//          p--------q
+	//     3.  a1-----------------b1
+	//              a2-------b2
+	//              p--------q
 	//
-	// 4.       a1-------b1
-	//     a2-----------------b2
-	//          p--------q
+	//     4.       a1-------b1
+	//         a2-----------------b2
+	//              p--------q
 	//
 	// Thus there are only two cases of non-overlap:
 	//
-	// 1. a1------b1
-	//                a2------b2
+	//     1. a1------b1
+	//                    a2------b2
 	//
-	// 2.             a1------b1
-	//    a2------b2
+	//     2.             a1------b1
+	//        a2------b2
 	//
 	// Enforced by constructor: a1 <= b1 and a2 <= b2.  So we can just
 	// check the endpoints.

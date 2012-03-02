@@ -284,7 +284,7 @@ func TestMinDistPositive(t *testing.T) {
 	p := Point{1, 2, 3}
 	r := &Rect{Point{-1, -4, 7}, Point{2, -2, 9}}
 	expected := float64((-2-2)*(-2-2) + (7-3)*(7-3))
-	if d, _ := p.MinDist(r); math.Abs(d - expected) > EPS {
+	if d, _ := p.MinDist(r); math.Abs(d-expected) > EPS {
 		t.Errorf("Expected %v.MinDist(%v) == %v, got %v", p, r, expected, d)
 	}
 }
@@ -304,7 +304,7 @@ func TestMinMaxDist(t *testing.T) {
 	d3, _ := p.Dist(q3)
 	expected := math.Min(d1*d1, math.Min(d2*d2, d3*d3))
 
-	if d, _ := p.MinMaxDist(r); math.Abs(d - expected) > EPS {
+	if d, _ := p.MinMaxDist(r); math.Abs(d-expected) > EPS {
 		t.Errorf("Expected %v.MinMaxDist(%v) == %v, got %v", p, r, expected, d)
 	}
 }
