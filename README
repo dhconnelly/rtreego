@@ -30,7 +30,52 @@ go install github.com/dhconnelly/rtreego
 
 ## USAGE
 
-Not yet.
+Make sure you import github.com/dhconnelly/rtreego in your Go source files.
+
+### Storing, updating, and deleting objects
+
+// Create a new tree, specifying the number of spatial dimensions
+rt := rtreego.NewTree(3)
+
+// Create some test points
+p1 := rtreego.Point{-3.2, 4.7, 6.5}
+p2 := rtreego.Point{0.4, 11.6, -5.1}
+p3 := rtreego.Point{-3, -2, -1}
+
+// Create some test rectangles by specifiying a corner point and side lengths
+r1 := rtreego.NewRect(rtreego.Point{0.4, 0.5, -11.2}, []float64{1, 2, 3})
+r2 := rtreego.NewRect(rtreego.Point{6.2, -3.4, 9.7}, []float64{1.7, 2.7, 2.6})
+r3 := rtreego.NewRect(rtreego.Point{1, 1, 1}, []float64{1, 1, 1})
+
+// Insert the data with unique string IDs
+rt.InsertPoint("point 1", p1)
+rt.InsertPoint("point 2", p2)
+rt.InsertRect("rect 1", r1)
+rt.InsertRect("rect 2", r2)
+
+// Delete one of the rectangles
+rt.Delete("rect 2")
+
+// Update the location of one of the points
+rt.UpdatePoint("point 1", rtreego.Point{0, 0, 0})
+
+// Get the number of objects currently stored
+size := rt.Size()
+
+### Queries
+
+// Get the IDs of all objects that intersect a query rectangle
+results, _ := rt.SearchIntersect(r3)
+
+// Get the IDs of all objects contained in a query rectangle
+results, _ = rt.SearchContained(r3)
+
+// Get the IDs of the 3 objects closest to a query point
+results, _ = rt.SearchNearestNeighbors(p3, 3)
+
+### More information
+
+See http://dhconnelly.github.com/rtreego for full API documentation.
 
 ## REFERENCES
 
