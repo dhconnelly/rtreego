@@ -46,7 +46,8 @@ func Dist(p, q Point) (float64, error) {
 
 // MinDist computes the square of the distance from a point to a rectangle.
 // If the point is contained in the rectangle then the distance is zero.
-// Implemented per [RKV95], Definition 2.  See README.md for the reference.
+// Implemented per Definition 2 of "Nearest Neighbor Queries" by
+// N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
 func MinDist(p Point, r *Rect) (float64, error) {
 	if len(p) != len(r.p) {
 		return 0, &DimError{len(p), len(r.p)}
@@ -70,7 +71,8 @@ func MinDist(p Point, r *Rect) (float64, error) {
 // MinMaxDist computes the minimum of the maximum distances from p to points
 // on r.  If r is the bounding box of some geometric objects, then there is
 // at least one object contained in r within MinMaxDist(p, r) of p.
-// Implemented per [RKV95], Definition 4.  See README.md for the reference.
+// Implemented per Definition 4 of "Nearest Neighbor Queries" by
+// N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
 func MinMaxDist(p Point, r *Rect) (float64, error) {
 	if len(p) != len(r.p) {
 		return 0, &DimError{len(p), len(r.p)}
