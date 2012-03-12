@@ -16,14 +16,15 @@ type Rtree struct {
 	Dim         uint
 	MinChildren uint
 	MaxChildren uint
-	root        *node
+	root        node
 	size        int
 }
 
 // NewTree creates a new R-tree instance.  
 func NewTree(Dim, MinChildren, MaxChildren uint) *Rtree {
-	rt := Rtree{Dim, MinChildren, MaxChildren, new(node), 0}
-	rt.root.objects = make([]*Spatial, MinChildren)
+	rt := Rtree{Dim: Dim, MinChildren: MinChildren, MaxChildren: MaxChildren}
+	rt.root.entries = make([]entry, MinChildren)
+	rt.root.leaf = true
 	return &rt
 }
 
@@ -32,17 +33,18 @@ func (tree *Rtree) Size() int {
 	return tree.size
 }
 
-// node represents one entry in an R-tree.
+// node represents a tree node of an Rtree.
 type node struct {
 	parent  *node
-	entries []*entry // non-nil if this is an internal node
-	objects []*Spatial // non-nil if this is a leaf node
+	leaf bool
+	entries []entry
 }
 
-// entry represents one entry in an R-tree.
+// entry represents a spatial index record stored in a tree node.
 type entry struct {
 	bb     *Rect     // bounding-box of all children of this entry
 	child  *node
+	obj *Spatial
 }
 
 // Any type that implements Spatial can be stored in an Rtree and queried.
@@ -64,14 +66,13 @@ func (tree *Rtree) Insert(obj Spatial) error {
 
 // chooseLeaf finds the leaf node in which obj should be inserted.
 func (tree *Rtree) chooseLeaf(n *node, obj Spatial) *node {
-	if n.objects != nil {
-		// leaf node
+	if n.leaf {
 		return n
 	}
 
 	// find the entry whose bb needs least enlargement to include obj
 	diff := math.MaxFloat64
-	var chosen *entry = nil
+	var chosen entry
 	for _, e := range n.entries {
 		bb, err := BoundingBox(e.bb, obj.Bounds())
 		if err != nil {
@@ -93,17 +94,19 @@ func (tree *Rtree) adjustTree(n *node) {
 
 }
 
-// split splits an overflowing node into two nodes while attempting to minimize
-// the area of the resulting nodes.
-func (n *node) split() (left, right *node) {
+// split splits a node into two groups while attempting to minimize the
+// bounding-box area of the resulting groups.
+func (n *node) split(minGroupSize uint) (*node, *node) {
+	//left, right := n.pickSeeds()
+	// TODO: check for underflow
 	return nil, nil
 }
 
-// pickSeeds chooses the two child entries of n to start a split.
-func pickSeeds(entries []*entry) (left, right *entry) {
+// pickSeeds chooses two child entries of n to start a split.
+func (n *node) pickSeeds() (left, right int) {
 	maxWastedSpace := -1.0
-	for i, e1 := range entries {
-		for _, e2 := range entries[i+1:] {
+	for i, e1 := range n.entries {
+		for j, e2 := range n.entries[i+1:] {
 			expanded, err := BoundingBox(e1.bb, e2.bb)
 			if err != nil {
 				panic(err)
@@ -111,7 +114,7 @@ func pickSeeds(entries []*entry) (left, right *entry) {
 			d := expanded.Size() - e1.bb.Size() - e2.bb.Size()
 			if d > maxWastedSpace {
 				maxWastedSpace = d
-				left, right = e1, e2
+				left, right = i, j+i+1
 			}
 		}
 	}

@@ -8,7 +8,8 @@ func (r *Rect) Bounds() *Rect {
 	return r
 }
 
-func mustRect(r *Rect, err error) *Rect {
+func mustRect(p Point, widths []float64) *Rect {
+	r, err := NewRect(p, widths)
 	if err != nil {
 		panic(err)
 	}
@@ -21,23 +22,23 @@ var chooseLeafTests = []struct{
 	desc string
 }{
 	{
-		mustRect(NewRect(Point{1, 1, 1}, []float64{1, 1, 1})),
-		mustRect(NewRect(Point{-1, -1, -1}, []float64{0.5, 0.5, 0.5})),
-		mustRect(NewRect(Point{3, 4, -5}, []float64{2, 0.9, 8})),
+		mustRect(Point{1, 1, 1}, []float64{1, 1, 1}),
+		mustRect(Point{-1, -1, -1}, []float64{0.5, 0.5, 0.5}),
+		mustRect(Point{3, 4, -5}, []float64{2, 0.9, 8}),
 		1,
 		"clear winner",
 	},
 	{
-		mustRect(NewRect(Point{-1, -1.5, -1}, []float64{0.5, 2.5025, 0.5})),
-		mustRect(NewRect(Point{0.5, 1, 0.5}, []float64{0.5, 0.815, 0.5})),
-		mustRect(NewRect(Point{3, 4, -5}, []float64{2, 0.9, 8})),
+		mustRect(Point{-1, -1.5, -1}, []float64{0.5, 2.5025, 0.5}),
+		mustRect(Point{0.5, 1, 0.5}, []float64{0.5, 0.815, 0.5}),
+		mustRect(Point{3, 4, -5}, []float64{2, 0.9, 8}),
 		1,
 		"leaves tie",
 	},
 	{
-		mustRect(NewRect(Point{-1, -1.5, -1}, []float64{0.5, 2.5025, 0.5})),
-		mustRect(NewRect(Point{0.5, 1, 0.5}, []float64{0.5, 0.815, 0.5})),
-		mustRect(NewRect(Point{-1, -2, -3}, []float64{2, 4, 6})),
+		mustRect(Point{-1, -1.5, -1}, []float64{0.5, 2.5025, 0.5}),
+		mustRect(Point{0.5, 1, 0.5}, []float64{0.5, 0.815, 0.5}),
+		mustRect(Point{-1, -2, -3}, []float64{2, 4, 6}),
 		2,
 		"leaf contains obj",
 	},
@@ -46,7 +47,7 @@ var chooseLeafTests = []struct{
 func TestChooseLeafEmpty(t *testing.T) {
 	rt := NewTree(3, 5, 10)
 	obj := Point{0, 0, 0}.ToRect(0.5)
-	if leaf := rt.chooseLeaf(rt.root, obj); leaf != rt.root {
+	if leaf := rt.chooseLeaf(&rt.root, obj); leaf != &rt.root {
 		t.Errorf("expected chooseLeaf of empty tree to return root")
 	}
 }
@@ -54,23 +55,23 @@ func TestChooseLeafEmpty(t *testing.T) {
 func TestChooseLeaf(t *testing.T) {
 	for _, test := range chooseLeafTests {
 		rt := Rtree{}
-		rt.root = new(node)
+		rt.root = node{}
 		
-		leaf0 := &node{rt.root, nil, []*Spatial{}}
-		entry0 := &entry{test.bb0, leaf0}
+		leaf0 := &node{&rt.root, true, []entry{}}
+		entry0 := entry{test.bb0, leaf0, nil}
 		
-		leaf1 := &node{rt.root, nil, []*Spatial{}}
-		entry1 := &entry{test.bb1, leaf1}
+		leaf1 := &node{&rt.root, true, []entry{}}
+		entry1 := entry{test.bb1, leaf1, nil}
 		
-		leaf2 := &node{rt.root, nil, []*Spatial{}}
-		entry2 := &entry{test.bb2, leaf2}
+		leaf2 := &node{&rt.root, true, []entry{}}
+		entry2 := entry{test.bb2, leaf2, nil}
 
-		rt.root.entries = []*entry{entry0, entry1, entry2}
+		rt.root.entries = []entry{entry0, entry1, entry2}
 
 		obj := Point{0, 0, 0}.ToRect(0.5)
 
 		expected := rt.root.entries[test.exp].child
-		if leaf := rt.chooseLeaf(rt.root, obj); leaf != expected {
+		if leaf := rt.chooseLeaf(&rt.root, obj); leaf != expected {
 			t.Errorf("TestChooseLeaf(%s): expected %d", test.desc, test.exp)
 		}
 		
@@ -78,27 +79,41 @@ func TestChooseLeaf(t *testing.T) {
 }
 
 func TestPickSeeds(t *testing.T) {
-	entry1 := &entry{mustRect(NewRect(Point{1, 1}, []float64{1, 1})), nil}
-	entry2 := &entry{mustRect(NewRect(Point{1, -1}, []float64{2, 1})), nil}
-	entry3 := &entry{mustRect(NewRect(Point{-1, -1}, []float64{1, 2})), nil}
-	entries := []*entry{entry1, entry2, entry3}
-	left, right := pickSeeds(entries)
-	if left != entry1 || right != entry3 {
+	entry1 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
+	entry2 := entry{bb: mustRect(Point{1, -1}, []float64{2, 1})}
+	entry3 := entry{bb: mustRect(Point{-1, -1}, []float64{1, 2})}
+	n := node{entries: []entry{entry1, entry2, entry3}}
+	left, right := n.pickSeeds()
+	if n.entries[left] != entry1 || n.entries[right] != entry3 {
 		t.Errorf("TestPickSeeds: expected entries %d, %d", 1, 3)
 	}
 }
 
 func TestPickNext(t *testing.T) {
-	left := &entry{mustRect(NewRect(Point{1, 1}, []float64{1, 1})), nil}
-	right := &entry{mustRect(NewRect(Point{-1, -1}, []float64{1, 2})), nil}
+	left := &entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
+	right := &entry{bb: mustRect(Point{-1, -1}, []float64{1, 2})}
 
-	entry1 := &entry{mustRect(NewRect(Point{0, 0}, []float64{1, 1})), nil}
-	entry2 := &entry{mustRect(NewRect(Point{-2, -2}, []float64{1, 1})), nil}
-	entry3 := &entry{mustRect(NewRect(Point{1, 2}, []float64{1, 1})), nil}
+	entry1 := &entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
+	entry2 := &entry{bb: mustRect(Point{-2, -2}, []float64{1, 1})}
+	entry3 := &entry{bb: mustRect(Point{1, 2}, []float64{1, 1})}
 	entries := []*entry{entry1, entry2, entry3}
 
 	chosen := pickNext(left, right, entries)
 	if chosen != entry2 {
 		t.Errorf("TestPickNext: expected entry %d", 3)
 	}
+}
+
+func TestSplit(t *testing.T) {
+	entry1 := entry{bb: mustRect(Point{-3, -1}, []float64{2, 1})}
+	entry2 := entry{bb: mustRect(Point{1, 2}, []float64{1, 1})}
+	entry3 := entry{bb: mustRect(Point{-1, 0}, []float64{1, 1})}
+	entry4 := entry{bb: mustRect(Point{-3, -3}, []float64{1, 1})}
+	entry5 := entry{bb: mustRect(Point{1, -1}, []float64{2, 2})}
+	entries := []entry{entry1, entry2, entry3, entry4, entry5}
+	n := &node{entries: entries}
+	println(n)
+	//left, right := n.split(0) // left=entry2, right=entry4
+	//leftBB := mustRect(Point{-3, -3}, []float64{3, 4})
+	//rightBB := mustRect(Point{1, -1}, []float64{2, 4})
 }
