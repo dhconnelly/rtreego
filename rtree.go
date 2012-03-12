@@ -5,6 +5,10 @@
 // A library for efficiently storing and querying spatial data.
 package rtreego
 
+import (
+	"math"
+)
+
 // Rtree represents an R-tree, a balanced search tree for storing and querying
 // spatial objects.  Dim specifies the number of spatial dimensions and
 // MinChildren/MaxChildren specify the minimum/maximum branching factors.
@@ -31,13 +35,13 @@ func (tree *Rtree) Size() int {
 // node represents one entry in an R-tree.
 type node struct {
 	parent  *node
-	entries []entry // non-nil if this is an internal node
+	entries []*entry // non-nil if this is an internal node
 	objects []*Spatial // non-nil if this is a leaf node
 }
 
 // entry represents one entry in an R-tree.
 type entry struct {
-	bb     Rect     // bounding-box of all children of this entry
+	bb     *Rect     // bounding-box of all children of this entry
 	child  *node
 }
 
@@ -60,7 +64,28 @@ func (tree *Rtree) Insert(obj Spatial) error {
 
 // chooseLeaf finds the leaf node in which obj should be inserted.
 func (tree *Rtree) chooseLeaf(n *node, obj Spatial) *node {
-	return nil
+	if n.objects != nil {
+		// leaf node
+		return n
+	}
+
+	// find the entry whose bb needs least enlargement to include obj
+	diff := math.MaxFloat64
+	var chosen *entry = nil
+	for _, e := range n.entries {
+		bb, err := BoundingBox(e.bb, obj.Bounds())
+		if err != nil {
+			panic(err)
+		}
+		
+		d := bb.Size() - e.bb.Size()
+		if d < diff || (d == diff && e.bb.Size() < chosen.bb.Size()) {
+			diff = d
+			chosen = e
+		}
+	}
+
+	return tree.chooseLeaf(chosen.child, obj)
 }
 
 // adjustTree splits overflowing nodes and propagates the changes downwards.
