@@ -99,13 +99,27 @@ func (n *node) split() (left, right *node) {
 	return nil, nil
 }
 
-// pickSeeds chooses the two child nodes of n to start a split.
-func (n *node) pickSeeds() (left, right *node) {
-	return nil, nil
+// pickSeeds chooses the two child entries of n to start a split.
+func pickSeeds(entries []*entry) (left, right *entry) {
+	maxWastedSpace := 0.0
+	for i, e1 := range entries {
+		for _, e2 := range entries[i+1:] {
+			expanded, err := BoundingBox(e1.bb, e2.bb)
+			if err != nil {
+				panic(err)
+			}
+			d := expanded.Size() - e1.bb.Size() - e2.bb.Size()
+			if d > maxWastedSpace {
+				maxWastedSpace = d
+				left, right = e1, e2
+			}
+		}
+	}
+	return left, right
 }
 
-// pickNext chooses a child node of n to be added to left or right.
-func (n *node) pickNext(left, right *node) *node {
+// pickNext chooses an entry to be added to an entry group.
+func pickNext(entries []*entry, left, right *entry) *entry {
 	return nil
 }
 

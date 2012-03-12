@@ -76,3 +76,14 @@ func TestChooseLeaf(t *testing.T) {
 		
 	}
 }
+
+func TestPickSeeds(t *testing.T) {
+	entry1 := &entry{mustRect(NewRect(Point{1, 1}, []float64{1, 1})), nil}
+	entry2 := &entry{mustRect(NewRect(Point{1, -1}, []float64{2, 1})), nil}
+	entry3 := &entry{mustRect(NewRect(Point{-1, -1}, []float64{1, 2})), nil}
+	entries := []*entry{entry1, entry2, entry3}
+	left, right := pickSeeds(entries)
+	if left != entry1 || right != entry3 {
+		t.Errorf("TestPickSeeds: expected entries %d, %d", 1, 3)
+	}
+}
