@@ -77,9 +77,17 @@ To demonstrate, let's create and store some test data.
 		return t.where
 	}
 	
-	thing1 := Thing{r1, "foo"}
-	thing2 := Thing{r2, "bar"}
+	rt.Insert(&Thing{r1, "foo"})
+	rt.Insert(&Thing{r2, "bar"})
 	
+	size := rt.Size() // returns 2
+
+We can insert and delete objects from the tree in any order.
+
+	rt.Delete(thing2)
+	// do some stuff...
+	rt.Insert(anotherThing)
+
 If you want to store points instead of rectangles, you can easily convert a
 point into a rectangle using the `ToRect` method:
 
@@ -96,23 +104,8 @@ point into a rectangle using the `ToRect` method:
 		// with side lengths 2 * tol:
 		return s.location.ToRect(tol)
 	}
-
-We can insert and delete objects from the tree in any order, or get some
-information about the tree itself:
-
-	rt.Insert(thing1)
-	rt.Insert(thing2)
 	
-	size := rt.Size() // returns 2
-	
-	// do some stuff...
-
-	rt.Delete(thing2)
-	rt.Insert(anotherThing)
-	
-	// etc.
-	
-	height := rt.Height() // depends on the branching factor
+	rt.Insert(&Somewhere{rtreego.Point{0, 0}, "Someplace", nil})
 
 If you want to update the location of an object, you must delete it, update it,
 and re-insert.  Just modifying the object so that the `*Rect` returned by 
