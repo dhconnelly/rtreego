@@ -18,7 +18,9 @@ type Rtree struct {
 
 // NewTree creates a new R-tree instance.  
 func NewTree(Dim, MinChildren, MaxChildren uint) *Rtree {
-	return &Rtree{Dim, MinChildren, MaxChildren, nil, 0}
+	rt := Rtree{Dim, MinChildren, MaxChildren, new(node), 0}
+	rt.root.objects = make([]*Spatial, MinChildren)
+	return &rt
 }
 
 // Size returns the number of objects currently stored in tree.
@@ -29,14 +31,14 @@ func (tree *Rtree) Size() int {
 // node represents one entry in an R-tree.
 type node struct {
 	parent  *node
-	entries []entry
+	entries []entry // non-nil if this is an internal node
+	objects []*Spatial // non-nil if this is a leaf node
 }
 
 // entry represents one entry in an R-tree.
 type entry struct {
-	bb     Rect     // the bounding-box rectangle of this entry
-	object *Spatial // non-nil if this entry is contained in a leaf node
-	child  *node    // non-nil if this entry is contained in an internal node
+	bb     Rect     // bounding-box of all children of this entry
+	child  *node
 }
 
 // Any type that implements Spatial can be stored in an Rtree and queried.
@@ -57,7 +59,7 @@ func (tree *Rtree) Insert(obj Spatial) error {
 }
 
 // chooseLeaf finds the leaf node in which obj should be inserted.
-func (tree *Rtree) chooseLeaf(obj Spatial) *node {
+func (tree *Rtree) chooseLeaf(n *node, obj Spatial) *node {
 	return nil
 }
 
