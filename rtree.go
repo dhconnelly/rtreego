@@ -101,7 +101,7 @@ func (n *node) split() (left, right *node) {
 
 // pickSeeds chooses the two child entries of n to start a split.
 func pickSeeds(entries []*entry) (left, right *entry) {
-	maxWastedSpace := 0.0
+	maxWastedSpace := -1.0
 	for i, e1 := range entries {
 		for _, e2 := range entries[i+1:] {
 			expanded, err := BoundingBox(e1.bb, e2.bb)
@@ -115,12 +115,32 @@ func pickSeeds(entries []*entry) (left, right *entry) {
 			}
 		}
 	}
-	return left, right
+	return
 }
 
 // pickNext chooses an entry to be added to an entry group.
-func pickNext(entries []*entry, left, right *entry) *entry {
-	return nil
+func pickNext(left, right *entry, entries []*entry) (next *entry) {
+	maxDiff := -1.0
+	for _, e := range entries {
+		expanded1, err1 := BoundingBox(left.bb, e.bb)
+		if err1 != nil {
+			panic(err1)
+		}
+		d1 := expanded1.Size() - left.bb.Size()
+		
+		expanded2, err2 := BoundingBox(right.bb, e.bb)
+		if err2 != nil {
+			panic(err2)
+		}
+		d2 := expanded2.Size() - right.bb.Size()
+
+		d := math.Abs(d1 - d2)
+		if d > maxDiff {
+			maxDiff = d
+			next = e
+		}
+	}
+	return
 }
 
 // Deletion

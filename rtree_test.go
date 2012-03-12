@@ -87,3 +87,18 @@ func TestPickSeeds(t *testing.T) {
 		t.Errorf("TestPickSeeds: expected entries %d, %d", 1, 3)
 	}
 }
+
+func TestPickNext(t *testing.T) {
+	left := &entry{mustRect(NewRect(Point{1, 1}, []float64{1, 1})), nil}
+	right := &entry{mustRect(NewRect(Point{-1, -1}, []float64{1, 2})), nil}
+
+	entry1 := &entry{mustRect(NewRect(Point{0, 0}, []float64{1, 1})), nil}
+	entry2 := &entry{mustRect(NewRect(Point{-2, -2}, []float64{1, 1})), nil}
+	entry3 := &entry{mustRect(NewRect(Point{1, 2}, []float64{1, 1})), nil}
+	entries := []*entry{entry1, entry2, entry3}
+
+	chosen := pickNext(left, right, entries)
+	if chosen != entry2 {
+		t.Errorf("TestPickNext: expected entry %d", 3)
+	}
+}
