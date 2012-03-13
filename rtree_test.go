@@ -90,16 +90,16 @@ func TestPickSeeds(t *testing.T) {
 }
 
 func TestPickNext(t *testing.T) {
-	left := &entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
-	right := &entry{bb: mustRect(Point{-1, -1}, []float64{1, 2})}
+	left := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
+	right := entry{bb: mustRect(Point{-1, -1}, []float64{1, 2})}
 
-	entry1 := &entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
-	entry2 := &entry{bb: mustRect(Point{-2, -2}, []float64{1, 1})}
-	entry3 := &entry{bb: mustRect(Point{1, 2}, []float64{1, 1})}
-	entries := []*entry{entry1, entry2, entry3}
+	entry1 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
+	entry2 := entry{bb: mustRect(Point{-2, -2}, []float64{1, 1})}
+	entry3 := entry{bb: mustRect(Point{1, 2}, []float64{1, 1})}
+	entries := []entry{entry1, entry2, entry3}
 
 	chosen := pickNext(left, right, entries)
-	if chosen != entry2 {
+	if entries[chosen] != entry2 {
 		t.Errorf("TestPickNext: expected entry %d", 3)
 	}
 }
@@ -112,8 +112,20 @@ func TestSplit(t *testing.T) {
 	entry5 := entry{bb: mustRect(Point{1, -1}, []float64{2, 2})}
 	entries := []entry{entry1, entry2, entry3, entry4, entry5}
 	n := &node{entries: entries}
-	println(n)
-	//left, right := n.split(0) // left=entry2, right=entry4
-	//leftBB := mustRect(Point{-3, -3}, []float64{3, 4})
-	//rightBB := mustRect(Point{1, -1}, []float64{2, 4})
+
+	left, right := n.split(0) // left=entry2, right=entry4
+	leftBB := mustRect(Point{1, -1}, []float64{2, 4})
+	rightBB := mustRect(Point{-3, -3}, []float64{3, 4})
+
+	dlp, _ := left.bb.p.Dist(leftBB.p)
+	dlq, _ := left.bb.q.Dist(leftBB.q)
+	if dlp >= EPS || dlq >= EPS {
+		t.Errorf("TestSplit: expected left.bb = %s, got %s", leftBB, left.bb)
+	}
+
+	drp, _ := right.bb.p.Dist(rightBB.p)
+	drq, _ := right.bb.q.Dist(rightBB.q)
+	if drp >= EPS || drq >= EPS {
+		t.Errorf("TestSplit: expected right.bb = %s, got %s", rightBB, right.bb)
+	}
 }

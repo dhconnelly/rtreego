@@ -96,10 +96,42 @@ func (tree *Rtree) adjustTree(n *node) {
 
 // split splits a node into two groups while attempting to minimize the
 // bounding-box area of the resulting groups.
-func (n *node) split(minGroupSize uint) (*node, *node) {
-	//left, right := n.pickSeeds()
-	// TODO: check for underflow
-	return nil, nil
+func (n *node) split(minGroupSize uint) (left, right entry) {
+	l, r := n.pickSeeds()
+	leftSeed, rightSeed := n.entries[l], n.entries[r]
+
+	// new nodes can't be leaves, even if n is a leaf
+	left = entry{leftSeed.bb, &node{entries: []entry{leftSeed}}, nil}
+	right = entry{rightSeed.bb, &node{entries: []entry{rightSeed}}, nil}
+
+	// get the entries to be divided between left and right
+	remaining := append(n.entries[:l], n.entries[l+1:r]...)
+	remaining = append(remaining, n.entries[r+1:]...)
+	
+	for len(remaining) > 0 {
+		// TODO: check for underflow
+		next := pickNext(left, right, remaining)
+		nextEntry := remaining[next]
+
+		leftEnlarged, _ := BoundingBox(left.bb, nextEntry.bb)
+		rightEnlarged, _ := BoundingBox(right.bb, nextEntry.bb)
+
+		// assign to group whose bb must expand least
+		// TODO: handle ties
+		leftDiff := leftEnlarged.Size() - left.bb.Size()
+		rightDiff := rightEnlarged.Size() - right.bb.Size()
+		if leftDiff - rightDiff <= 0 {
+			left.child.entries = append(left.child.entries, nextEntry)
+			left.bb = leftEnlarged
+		} else {
+			right.child.entries = append(right.child.entries, nextEntry)
+			right.bb = rightEnlarged
+		}
+
+		remaining = append(remaining[:next], remaining[next+1:]...)
+	}
+	
+	return
 }
 
 // pickSeeds chooses two child entries of n to start a split.
@@ -122,9 +154,9 @@ func (n *node) pickSeeds() (left, right int) {
 }
 
 // pickNext chooses an entry to be added to an entry group.
-func pickNext(left, right *entry, entries []*entry) (next *entry) {
+func pickNext(left, right entry, entries []entry) (next int) {
 	maxDiff := -1.0
-	for _, e := range entries {
+	for i, e := range entries {
 		expanded1, err1 := BoundingBox(left.bb, e.bb)
 		if err1 != nil {
 			panic(err1)
@@ -140,7 +172,7 @@ func pickNext(left, right *entry, entries []*entry) (next *entry) {
 		d := math.Abs(d1 - d2)
 		if d > maxDiff {
 			maxDiff = d
-			next = e
+			next = i
 		}
 	}
 	return
