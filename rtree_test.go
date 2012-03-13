@@ -113,15 +113,16 @@ func TestSplit(t *testing.T) {
 	entries := []entry{entry1, entry2, entry3, entry4, entry5}
 	n := &node{entries: entries}
 
-	left, right := n.split(0) // left=entry2, right=entry4
-	lbb, rbb := left.bb, right.bb
+	l, r := n.split(0) // left=entry2, right=entry4
 	expLeft := mustRect(Point{1, -1}, []float64{2, 4})
 	expRight := mustRect(Point{-3, -3}, []float64{3, 4})
 
-	if lbb.p.dist(expLeft.p) >= EPS || lbb.q.dist(expLeft.q) >= EPS {
-		t.Errorf("TestSplit: expected left.bb = %s, got %s", expLeft, lbb)
+	if l.bb.p.dist(expLeft.p) >= EPS || l.bb.q.dist(expLeft.q) >= EPS {
+		t.Errorf("TestSplit: expected left.bb = %s, got %s", expLeft, l.bb)
 	}
-	if rbb.p.dist(expRight.p) >= EPS || rbb.q.dist(expRight.q) >= EPS {
-		t.Errorf("TestSplit: expected right.bb = %s, got %s", expRight, rbb)
+	if r.bb.p.dist(expRight.p) >= EPS || r.bb.q.dist(expRight.q) >= EPS {
+		t.Errorf("TestSplit: expected right.bb = %s, got %s", expRight, r.bb)
 	}
 }
+
+// TODO: assignGroup unit tests

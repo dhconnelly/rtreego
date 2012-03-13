@@ -107,27 +107,49 @@ func (n *node) split(minGroupSize uint) (left, right entry) {
 	for len(remaining) > 0 {
 		// TODO: check for underflow
 		next := pickNext(left, right, remaining)
-		nextEntry := remaining[next]
-
-		leftEnlarged := boundingBox(left.bb, nextEntry.bb)
-		rightEnlarged := boundingBox(right.bb, nextEntry.bb)
-
-		// assign to group whose bb must expand least
-		// TODO: handle ties
-		leftDiff := leftEnlarged.size() - left.bb.size()
-		rightDiff := rightEnlarged.size() - right.bb.size()
-		if leftDiff - rightDiff <= 0 {
-			left.child.entries = append(left.child.entries, nextEntry)
-			left.bb = leftEnlarged
-		} else {
-			right.child.entries = append(right.child.entries, nextEntry)
-			right.bb = rightEnlarged
-		}
-
+		assignGroup(&remaining[next], &left, &right)
 		remaining = append(remaining[:next], remaining[next+1:]...)
 	}
 	
 	return
+}
+
+// assignGroup chooses one of two groups to which a node should be added.
+func assignGroup(e, left, right *entry) {
+	leftEnlarged := boundingBox(left.bb, e.bb)
+	rightEnlarged := boundingBox(right.bb, e.bb)
+
+	assign := func(group *entry, bb *Rect) {
+		group.child.entries = append(group.child.entries, *e)
+		group.bb = bb
+	}
+
+	// first, choose the group that needs the least enlargement
+	leftDiff := leftEnlarged.size() - left.bb.size()
+	rightDiff := rightEnlarged.size() - right.bb.size()
+	if diff := leftDiff - rightDiff; diff < 0 {
+		assign(left, leftEnlarged)
+		return
+	} else if diff > 0 {
+		assign(right, rightEnlarged)
+		return
+	}
+
+	// next, choose the group that has smaller area
+	if diff := left.bb.size() - right.bb.size(); diff < 0 {
+		assign(left, leftEnlarged)
+		return
+	} else if diff > 0 {
+		assign(right, rightEnlarged)
+		return
+	}
+
+	// next, choose the group with fewer entries
+	if diff := len(left.child.entries) - len(right.child.entries); diff <= 0 {
+		assign(left, leftEnlarged)
+		return
+	}
+	assign(right, rightEnlarged)
 }
 
 // pickSeeds chooses two child entries of n to start a split.
