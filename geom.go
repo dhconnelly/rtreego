@@ -16,7 +16,7 @@ type DimError struct {
 	Actual   int
 }
 
-func (err *DimError) Error() string {
+func (err DimError) Error() string {
 	return "rtreego: dimension mismatch"
 }
 
@@ -32,26 +32,26 @@ func (err DistError) Error() string {
 type Point []float64
 
 // Dist computes the Euclidean distance between two points p and q.
-func (p Point) Dist(q Point) (float64, error) {
+func (p Point) dist(q Point) float64 {
 	if len(p) != len(q) {
-		return 0, &DimError{len(p), len(q)}
+		panic(DimError{len(p), len(q)})
 	}
 	sum := 0.0
 	for i := range p {
 		dx := p[i] - q[i]
 		sum += dx * dx
 	}
-	return math.Sqrt(sum), nil
+	return math.Sqrt(sum)
 }
 
-// MinDist computes the square of the distance from a point to a rectangle.
+// minDist computes the square of the distance from a point to a rectangle.
 // If the point is contained in the rectangle then the distance is zero.
 //
 // Implemented per Definition 2 of "Nearest Neighbor Queries" by
 // N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
-func (p Point) MinDist(r *Rect) (float64, error) {
+func (p Point) minDist(r *Rect) float64 {
 	if len(p) != len(r.p) {
-		return 0, &DimError{len(p), len(r.p)}
+		panic(DimError{len(p), len(r.p)})
 	}
 
 	sum := 0.0
@@ -66,18 +66,18 @@ func (p Point) MinDist(r *Rect) (float64, error) {
 			sum += 0
 		}
 	}
-	return sum, nil
+	return sum
 }
 
-// MinMaxDist computes the minimum of the maximum distances from p to points
+// minMaxDist computes the minimum of the maximum distances from p to points
 // on r.  If r is the bounding box of some geometric objects, then there is
-// at least one object contained in r within MinMaxDist(p, r) of p.
+// at least one object contained in r within minMaxDist(p, r) of p.
 //
 // Implemented per Definition 4 of "Nearest Neighbor Queries" by
 // N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
-func (p Point) MinMaxDist(r *Rect) (float64, error) {
+func (p Point) minMaxDist(r *Rect) float64 {
 	if len(p) != len(r.p) {
-		return 0, &DimError{len(p), len(r.p)}
+		panic(DimError{len(p), len(r.p)})
 	}
 
 	// by definition, MinMaxDist(p, r) =
@@ -118,7 +118,7 @@ func (p Point) MinMaxDist(r *Rect) (float64, error) {
 		}
 	}
 
-	return min, nil
+	return min
 }
 
 // Rect represents a subset of n-dimensional Euclidean space of the form
@@ -153,8 +153,8 @@ func NewRect(p Point, lengths []float64) (*Rect, error) {
 	return &Rect{p, q}, nil
 }
 
-// Size computes the measure of a rectangle (the product of its side lengths).
-func (r *Rect) Size() float64 {
+// size computes the measure of a rectangle (the product of its side lengths).
+func (r *Rect) size() float64 {
 	size := 1.0
 	for i, a := range r.p {
 		b := r.q[i]
@@ -163,8 +163,8 @@ func (r *Rect) Size() float64 {
 	return size
 }
 
-// Margin computes the sum of the edge lengths of a rectangle.
-func (r *Rect) Margin() float64 {
+// margin computes the sum of the edge lengths of a rectangle.
+func (r *Rect) margin() float64 {
 	// The number of edges in an n-dimensional rectangle is n * 2^(n-1)
 	// (http://en.wikipedia.org/wiki/Hypercube_graph).  Thus the number
 	// of edges of length (ai - bi), where the rectangle is determined
@@ -181,27 +181,27 @@ func (r *Rect) Margin() float64 {
 	return math.Pow(2, float64(dim-1)) * sum
 }
 
-// ContainsPoint tests whether p is located inside or on the boundary of r.
-func (r *Rect) ContainsPoint(p Point) (bool, error) {
+// containsPoint tests whether p is located inside or on the boundary of r.
+func (r *Rect) containsPoint(p Point) bool {
 	if len(p) != len(r.p) {
-		return false, &DimError{len(r.p), len(p)}
+		panic(DimError{len(r.p), len(p)})
 	}
 
 	for i, a := range p {
 		// p is contained in (or on) r if and only if p <= a <= q for
 		// every dimension.
 		if a < r.p[i] || a > r.q[i] {
-			return false, nil
+			return false
 		}
 	}
 
-	return true, nil
+	return true
 }
 
-// ContainsRect tests whether r2 is is located inside r1.
-func (r1 *Rect) ContainsRect(r2 *Rect) (bool, error) {
+// containsRect tests whether r2 is is located inside r1.
+func (r1 *Rect) containsRect(r2 *Rect) bool {
 	if len(r1.p) != len(r2.p) {
-		return false, &DimError{len(r1.p), len(r2.p)}
+		panic(DimError{len(r1.p), len(r2.p)})
 	}
 
 	for i, a1 := range r1.p {
@@ -210,19 +210,19 @@ func (r1 *Rect) ContainsRect(r2 *Rect) (bool, error) {
 		// so containment holds if and only if a1 <= a2 <= b2 <= b1
 		// for every dimension.
 		if a1 > a2 || b2 > b1 {
-			return false, nil
+			return false
 		}
 	}
 
-	return true, nil
+	return true
 }
 
-// Intersect computes the intersection of two rectangles.  If no intersection
+// intersect computes the intersection of two rectangles.  If no intersection
 // exists, the intersection is nil.
-func Intersect(r1, r2 *Rect) (*Rect, error) {
+func intersect(r1, r2 *Rect) *Rect {
 	dim := len(r1.p)
 	if len(r2.p) != dim {
-		return nil, &DimError{dim, len(r2.p)}
+		panic(DimError{dim, len(r2.p)})
 	}
 
 	// There are four cases of overlap:
@@ -259,12 +259,12 @@ func Intersect(r1, r2 *Rect) (*Rect, error) {
 	for i := range p {
 		a1, b1, a2, b2 := r1.p[i], r1.q[i], r2.p[i], r2.q[i]
 		if b2 <= a1 || b1 <= a2 {
-			return nil, nil
+			return nil
 		}
 		p[i] = math.Max(a1, a2)
 		q[i] = math.Min(b1, b2)
 	}
-	return &Rect{p, q}, nil
+	return &Rect{p, q}
 }
 
 // ToRect constructs a rectangle containing p with side lengths 2*tol.
@@ -278,11 +278,11 @@ func (p Point) ToRect(tol float64) *Rect {
 	return &Rect{a, b}
 }
 
-// BoundingBox constructs the smallest rectangle containing both r1 and r2.
-func BoundingBox(r1, r2 *Rect) (*Rect, error) {
+// boundingBox constructs the smallest rectangle containing both r1 and r2.
+func boundingBox(r1, r2 *Rect) *Rect {
 	dim := len(r1.p)
 	if len(r2.p) != dim {
-		return nil, &DimError{dim, len(r2.p)}
+		panic(DimError{dim, len(r2.p)})
 	}
 
 	p := make([]float64, dim)
@@ -301,5 +301,6 @@ func BoundingBox(r1, r2 *Rect) (*Rect, error) {
 		}
 	}
 
-	return NewRect(p, lengths)
+	r, _ := NewRect(p, lengths)
+	return r
 }

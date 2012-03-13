@@ -74,13 +74,9 @@ func (tree *Rtree) chooseLeaf(n *node, obj Spatial) *node {
 	diff := math.MaxFloat64
 	var chosen entry
 	for _, e := range n.entries {
-		bb, err := BoundingBox(e.bb, obj.Bounds())
-		if err != nil {
-			panic(err)
-		}
-		
-		d := bb.Size() - e.bb.Size()
-		if d < diff || (d == diff && e.bb.Size() < chosen.bb.Size()) {
+		bb := boundingBox(e.bb, obj.Bounds())
+		d := bb.size() - e.bb.size()
+		if d < diff || (d == diff && e.bb.size() < chosen.bb.size()) {
 			diff = d
 			chosen = e
 		}
@@ -113,13 +109,13 @@ func (n *node) split(minGroupSize uint) (left, right entry) {
 		next := pickNext(left, right, remaining)
 		nextEntry := remaining[next]
 
-		leftEnlarged, _ := BoundingBox(left.bb, nextEntry.bb)
-		rightEnlarged, _ := BoundingBox(right.bb, nextEntry.bb)
+		leftEnlarged := boundingBox(left.bb, nextEntry.bb)
+		rightEnlarged := boundingBox(right.bb, nextEntry.bb)
 
 		// assign to group whose bb must expand least
 		// TODO: handle ties
-		leftDiff := leftEnlarged.Size() - left.bb.Size()
-		rightDiff := rightEnlarged.Size() - right.bb.Size()
+		leftDiff := leftEnlarged.size() - left.bb.size()
+		rightDiff := rightEnlarged.size() - right.bb.size()
 		if leftDiff - rightDiff <= 0 {
 			left.child.entries = append(left.child.entries, nextEntry)
 			left.bb = leftEnlarged
@@ -139,11 +135,7 @@ func (n *node) pickSeeds() (left, right int) {
 	maxWastedSpace := -1.0
 	for i, e1 := range n.entries {
 		for j, e2 := range n.entries[i+1:] {
-			expanded, err := BoundingBox(e1.bb, e2.bb)
-			if err != nil {
-				panic(err)
-			}
-			d := expanded.Size() - e1.bb.Size() - e2.bb.Size()
+			d := boundingBox(e1.bb, e2.bb).size() - e1.bb.size() - e2.bb.size()
 			if d > maxWastedSpace {
 				maxWastedSpace = d
 				left, right = i, j+i+1
@@ -157,18 +149,8 @@ func (n *node) pickSeeds() (left, right int) {
 func pickNext(left, right entry, entries []entry) (next int) {
 	maxDiff := -1.0
 	for i, e := range entries {
-		expanded1, err1 := BoundingBox(left.bb, e.bb)
-		if err1 != nil {
-			panic(err1)
-		}
-		d1 := expanded1.Size() - left.bb.Size()
-		
-		expanded2, err2 := BoundingBox(right.bb, e.bb)
-		if err2 != nil {
-			panic(err2)
-		}
-		d2 := expanded2.Size() - right.bb.Size()
-
+		d1 := boundingBox(left.bb, e.bb).size() - left.bb.size()
+		d2 := boundingBox(right.bb, e.bb).size() - right.bb.size()
 		d := math.Abs(d1 - d2)
 		if d > maxDiff {
 			maxDiff = d

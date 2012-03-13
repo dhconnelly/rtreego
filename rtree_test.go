@@ -114,18 +114,14 @@ func TestSplit(t *testing.T) {
 	n := &node{entries: entries}
 
 	left, right := n.split(0) // left=entry2, right=entry4
-	leftBB := mustRect(Point{1, -1}, []float64{2, 4})
-	rightBB := mustRect(Point{-3, -3}, []float64{3, 4})
+	lbb, rbb := left.bb, right.bb
+	expLeft := mustRect(Point{1, -1}, []float64{2, 4})
+	expRight := mustRect(Point{-3, -3}, []float64{3, 4})
 
-	dlp, _ := left.bb.p.Dist(leftBB.p)
-	dlq, _ := left.bb.q.Dist(leftBB.q)
-	if dlp >= EPS || dlq >= EPS {
-		t.Errorf("TestSplit: expected left.bb = %s, got %s", leftBB, left.bb)
+	if lbb.p.dist(expLeft.p) >= EPS || lbb.q.dist(expLeft.q) >= EPS {
+		t.Errorf("TestSplit: expected left.bb = %s, got %s", expLeft, lbb)
 	}
-
-	drp, _ := right.bb.p.Dist(rightBB.p)
-	drq, _ := right.bb.q.Dist(rightBB.q)
-	if drp >= EPS || drq >= EPS {
-		t.Errorf("TestSplit: expected right.bb = %s, got %s", rightBB, right.bb)
+	if rbb.p.dist(expRight.p) >= EPS || rbb.q.dist(expRight.q) >= EPS {
+		t.Errorf("TestSplit: expected right.bb = %s, got %s", expRight, rbb)
 	}
 }
