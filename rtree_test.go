@@ -89,8 +89,11 @@ func TestPickSeeds(t *testing.T) {
 }
 
 func TestPickNext(t *testing.T) {
-	left := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
-	right := entry{bb: mustRect(Point{-1, -1}, []float64{1, 2})}
+	leftEntry := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
+	left := &node{entries: []entry{leftEntry}}
+
+	rightEntry := entry{bb: mustRect(Point{-1, -1}, []float64{1, 2})}
+	right := &node{entries: []entry{rightEntry}}
 
 	entry1 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
 	entry2 := entry{bb: mustRect(Point{-2, -2}, []float64{1, 1})}
@@ -116,11 +119,13 @@ func TestSplit(t *testing.T) {
 	expLeft := mustRect(Point{1, -1}, []float64{2, 4})
 	expRight := mustRect(Point{-3, -3}, []float64{3, 4})
 
-	if l.bb.p.dist(expLeft.p) >= EPS || l.bb.q.dist(expLeft.q) >= EPS {
-		t.Errorf("expected left.bb = %s, got %s", expLeft, l.bb)
+	lbb := l.computeBoundingBox()
+	rbb := r.computeBoundingBox()
+	if lbb.p.dist(expLeft.p) >= EPS || lbb.q.dist(expLeft.q) >= EPS {
+		t.Errorf("expected left.bb = %s, got %s", expLeft, lbb)
 	}
-	if r.bb.p.dist(expRight.p) >= EPS || r.bb.q.dist(expRight.q) >= EPS {
-		t.Errorf("expected right.bb = %s, got %s", expRight, r.bb)
+	if rbb.p.dist(expRight.p) >= EPS || rbb.q.dist(expRight.q) >= EPS {
+		t.Errorf("expected right.bb = %s, got %s", expRight, rbb)
 	}
 }
 
@@ -135,7 +140,7 @@ func TestSplitUnderflow(t *testing.T) {
 
 	l, r := n.split(2)
 
-	if len(l.child.entries) != 3 || len(r.child.entries) != 2 {
+	if len(l.entries) != 3 || len(r.entries) != 2 {
 		t.Errorf("expected underflow assignment for right group")
 	}
 }
@@ -147,14 +152,11 @@ func TestAssignGroupLeastEnlargement(t *testing.T) {
 	r11 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
 	r02 := entry{bb: mustRect(Point{0, 2}, []float64{1, 1})}
 
-	bb1 := boundingBox(r00.bb, r01.bb)
-	group1 := entry{bb: bb1, child: &node{entries: []entry{r00, r01}}}
-	
-	bb2 := boundingBox(r10.bb, r11.bb)
-	group2 := entry{bb: bb2, child: &node{entries: []entry{r10, r11}}}
+	group1 := &node{entries: []entry{r00, r01}}
+	group2 := &node{entries: []entry{r10, r11}}
 
-	assignGroup(&r02, &group1, &group2)
-	if len(group1.child.entries) != 3 || len(group2.child.entries) != 2 {
+	assignGroup(r02, group1, group2)
+	if len(group1.entries) != 3 || len(group2.entries) != 2 {
 		t.Errorf("expected r02 added to group 1")
 	}
 }
@@ -165,14 +167,11 @@ func TestAssignGroupSmallerArea(t *testing.T) {
 	r12 := entry{bb: mustRect(Point{1, 2}, []float64{1, 1})}
 	r02 := entry{bb: mustRect(Point{0, 2}, []float64{1, 1})}
 
-	bb1 := boundingBox(r00.bb, r01.bb)
-	group1 := entry{bb: bb1, child: &node{entries: []entry{r00, r01}}}
-	
-	bb2 := r12
-	group2 := entry{bb: bb2.bb, child: &node{entries: []entry{r12}}}
+	group1 := &node{entries: []entry{r00, r01}}
+	group2 := &node{entries: []entry{r12}}
 
-	assignGroup(&r02, &group1, &group2)
-	if len(group2.child.entries) != 2 || len(group1.child.entries) != 2 {
+	assignGroup(r02, group1, group2)
+	if len(group2.entries) != 2 || len(group1.entries) != 2 {
 		t.Errorf("expected r02 added to group 2")
 	}
 }
@@ -183,19 +182,16 @@ func TestAssignGroupFewerEntries(t *testing.T) {
 	r22 := entry{bb: mustRect(Point{2, 2}, []float64{1, 1})}
 	r02 := entry{bb: mustRect(Point{0, 2}, []float64{1, 1})}
 
-	bb1 := r0001.bb
-	group1 := entry{bb: bb1, child: &node{entries: []entry{r0001}}}
-	
-	bb2 := boundingBox(r12.bb, r22.bb)
-	group2 := entry{bb: bb2, child: &node{entries: []entry{r12, r22}}}
+	group1 := &node{entries: []entry{r0001}}
+	group2 := &node{entries: []entry{r12, r22}}
 
-	assignGroup(&r02, &group1, &group2)
-	if len(group2.child.entries) != 2 || len(group1.child.entries) != 2 {
+	assignGroup(r02, group1, group2)
+	if len(group2.entries) != 2 || len(group1.entries) != 2 {
 		t.Errorf("expected r02 added to group 2")
 	}
 }
 
-func TestAdjustTree(t *testing.T) {
+func TestAdjustTreeNoSplit(t *testing.T) {
 	rt := Rtree{}
 
 	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
@@ -205,11 +201,15 @@ func TestAdjustTree(t *testing.T) {
 	n := node{&rt.root, false, entries}
 	rt.root.entries = []entry{entry{bb: Point{0, 0}.ToRect(0), child: &n}}
 	
-	rt.adjustTree(&n)
+	rt.adjustTree(&n, nil)
 
 	e := &rt.root.entries[0]
 	p, q := Point{0, 0}, Point{2, 2}
 	if p.dist(e.bb.p) >= EPS || q.dist(e.bb.q) >= EPS {
 		t.Errorf("Expected adjustTree to fit %v,%v,%v", r00.bb, r01.bb, r10.bb)
 	}
+}
+
+func TestAdjustTree(t *testing.T) {
+
 }
