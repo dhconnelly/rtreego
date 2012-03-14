@@ -92,7 +92,7 @@ func (tree *Rtree) adjustTree(n *node) {
 
 // split splits a node into two groups while attempting to minimize the
 // bounding-box area of the resulting groups.
-func (n *node) split(minGroupSize uint) (left, right entry) {
+func (n *node) split(minGroupSize int) (left, right entry) {
 	l, r := n.pickSeeds()
 	leftSeed, rightSeed := n.entries[l], n.entries[r]
 
@@ -105,13 +105,27 @@ func (n *node) split(minGroupSize uint) (left, right entry) {
 	remaining = append(remaining, n.entries[r+1:]...)
 	
 	for len(remaining) > 0 {
-		// TODO: check for underflow
 		next := pickNext(left, right, remaining)
-		assignGroup(&remaining[next], &left, &right)
+		e := remaining[next]
+
+		// check for underflow
+		if len(remaining) + len(left.child.entries) <= minGroupSize {
+			assign(&e, &left)
+		} else if len(remaining) + len(right.child.entries) <= minGroupSize {
+			assign(&e, &right)
+		} else {
+			assignGroup(&e, &left, &right)
+		}
+
 		remaining = append(remaining[:next], remaining[next+1:]...)
 	}
 	
 	return
+}
+
+func assign(e, group *entry) {
+	group.child.entries = append(group.child.entries, *e)
+	group.bb = boundingBox(group.bb, e.bb)
 }
 
 // assignGroup chooses one of two groups to which a node should be added.
@@ -119,37 +133,32 @@ func assignGroup(e, left, right *entry) {
 	leftEnlarged := boundingBox(left.bb, e.bb)
 	rightEnlarged := boundingBox(right.bb, e.bb)
 
-	assign := func(group *entry, bb *Rect) {
-		group.child.entries = append(group.child.entries, *e)
-		group.bb = bb
-	}
-
 	// first, choose the group that needs the least enlargement
 	leftDiff := leftEnlarged.size() - left.bb.size()
 	rightDiff := rightEnlarged.size() - right.bb.size()
 	if diff := leftDiff - rightDiff; diff < 0 {
-		assign(left, leftEnlarged)
+		assign(e, left)
 		return
 	} else if diff > 0 {
-		assign(right, rightEnlarged)
+		assign(e, right)
 		return
 	}
 
 	// next, choose the group that has smaller area
 	if diff := left.bb.size() - right.bb.size(); diff < 0 {
-		assign(left, leftEnlarged)
+		assign(e, left)
 		return
 	} else if diff > 0 {
-		assign(right, rightEnlarged)
+		assign(e, right)
 		return
 	}
 
 	// next, choose the group with fewer entries
 	if diff := len(left.child.entries) - len(right.child.entries); diff <= 0 {
-		assign(left, leftEnlarged)
+		assign(e, left)
 		return
 	}
-	assign(right, rightEnlarged)
+	assign(e, right)
 }
 
 // pickSeeds chooses two child entries of n to start a split.

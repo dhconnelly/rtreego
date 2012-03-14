@@ -124,6 +124,22 @@ func TestSplit(t *testing.T) {
 	}
 }
 
+func TestSplitUnderflow(t *testing.T) {
+	entry1 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
+	entry2 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
+	entry3 := entry{bb: mustRect(Point{0, 2}, []float64{1, 1})}
+	entry4 := entry{bb: mustRect(Point{0, 3}, []float64{1, 1})}
+	entry5 := entry{bb: mustRect(Point{-50, -50}, []float64{1, 1})}
+	entries := []entry{entry1, entry2, entry3, entry4, entry5}
+	n := &node{entries: entries}
+
+	l, r := n.split(2)
+
+	if len(l.child.entries) != 3 || len(r.child.entries) != 2 {
+		t.Errorf("expected underflow assignment for right group")
+	}
+}
+
 func TestAssignGroupLeastEnlargement(t *testing.T) {
 	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
 	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
