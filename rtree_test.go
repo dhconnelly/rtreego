@@ -72,9 +72,8 @@ func TestChooseLeaf(t *testing.T) {
 
 		expected := rt.root.entries[test.exp].child
 		if leaf := rt.chooseLeaf(&rt.root, obj); leaf != expected {
-			t.Errorf("TestChooseLeaf(%s): expected %d", test.desc, test.exp)
+			t.Errorf("%s: expected %d", test.desc, test.exp)
 		}
-		
 	}
 }
 
@@ -85,7 +84,7 @@ func TestPickSeeds(t *testing.T) {
 	n := node{entries: []entry{entry1, entry2, entry3}}
 	left, right := n.pickSeeds()
 	if n.entries[left] != entry1 || n.entries[right] != entry3 {
-		t.Errorf("TestPickSeeds: expected entries %d, %d", 1, 3)
+		t.Errorf("expected entries %d, %d", 1, 3)
 	}
 }
 
@@ -100,7 +99,7 @@ func TestPickNext(t *testing.T) {
 
 	chosen := pickNext(left, right, entries)
 	if entries[chosen] != entry2 {
-		t.Errorf("TestPickNext: expected entry %d", 3)
+		t.Errorf("expected entry %d", 3)
 	}
 }
 
@@ -118,11 +117,64 @@ func TestSplit(t *testing.T) {
 	expRight := mustRect(Point{-3, -3}, []float64{3, 4})
 
 	if l.bb.p.dist(expLeft.p) >= EPS || l.bb.q.dist(expLeft.q) >= EPS {
-		t.Errorf("TestSplit: expected left.bb = %s, got %s", expLeft, l.bb)
+		t.Errorf("expected left.bb = %s, got %s", expLeft, l.bb)
 	}
 	if r.bb.p.dist(expRight.p) >= EPS || r.bb.q.dist(expRight.q) >= EPS {
-		t.Errorf("TestSplit: expected right.bb = %s, got %s", expRight, r.bb)
+		t.Errorf("expected right.bb = %s, got %s", expRight, r.bb)
 	}
 }
 
-// TODO: assignGroup unit tests
+func TestAssignGroupLeastEnlargement(t *testing.T) {
+	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
+	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
+	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
+	r11 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
+	r02 := entry{bb: mustRect(Point{0, 2}, []float64{1, 1})}
+
+	bb1 := boundingBox(r00.bb, r01.bb)
+	group1 := entry{bb: bb1, child: &node{entries: []entry{r00, r01}}}
+	
+	bb2 := boundingBox(r10.bb, r11.bb)
+	group2 := entry{bb: bb2, child: &node{entries: []entry{r10, r11}}}
+
+	assignGroup(&r02, &group1, &group2)
+	if len(group1.child.entries) != 3 || len(group2.child.entries) != 2 {
+		t.Errorf("expected r02 added to group 1")
+	}
+}
+
+func TestAssignGroupSmallerArea(t *testing.T) {
+	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
+	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
+	r12 := entry{bb: mustRect(Point{1, 2}, []float64{1, 1})}
+	r02 := entry{bb: mustRect(Point{0, 2}, []float64{1, 1})}
+
+	bb1 := boundingBox(r00.bb, r01.bb)
+	group1 := entry{bb: bb1, child: &node{entries: []entry{r00, r01}}}
+	
+	bb2 := r12
+	group2 := entry{bb: bb2.bb, child: &node{entries: []entry{r12}}}
+
+	assignGroup(&r02, &group1, &group2)
+	if len(group2.child.entries) != 2 || len(group1.child.entries) != 2 {
+		t.Errorf("expected r02 added to group 2")
+	}
+}
+
+func TestAssignGroupFewerEntries(t *testing.T) {
+	r0001 := entry{bb: mustRect(Point{0, 0}, []float64{1, 2})}
+	r12 := entry{bb: mustRect(Point{1, 2}, []float64{1, 1})}
+	r22 := entry{bb: mustRect(Point{2, 2}, []float64{1, 1})}
+	r02 := entry{bb: mustRect(Point{0, 2}, []float64{1, 1})}
+
+	bb1 := r0001.bb
+	group1 := entry{bb: bb1, child: &node{entries: []entry{r0001}}}
+	
+	bb2 := boundingBox(r12.bb, r22.bb)
+	group2 := entry{bb: bb2, child: &node{entries: []entry{r12, r22}}}
+
+	assignGroup(&r02, &group1, &group2)
+	if len(group2.child.entries) != 2 || len(group1.child.entries) != 2 {
+		t.Errorf("expected r02 added to group 2")
+	}
+}
