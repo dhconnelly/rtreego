@@ -194,3 +194,22 @@ func TestAssignGroupFewerEntries(t *testing.T) {
 		t.Errorf("expected r02 added to group 2")
 	}
 }
+
+func TestAdjustTree(t *testing.T) {
+	rt := Rtree{}
+
+	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
+	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
+	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
+	entries := []entry{r00, r01, r10}
+	n := node{&rt.root, false, entries}
+	rt.root.entries = []entry{entry{bb: Point{0, 0}.ToRect(0), child: &n}}
+	
+	rt.adjustTree(&n)
+
+	e := &rt.root.entries[0]
+	p, q := Point{0, 0}, Point{2, 2}
+	if p.dist(e.bb.p) >= EPS || q.dist(e.bb.q) >= EPS {
+		t.Errorf("Expected adjustTree to fit %v,%v,%v", r00.bb, r01.bb, r10.bb)
+	}
+}

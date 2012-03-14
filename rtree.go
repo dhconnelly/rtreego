@@ -85,9 +85,35 @@ func (tree *Rtree) chooseLeaf(n *node, obj Spatial) *node {
 	return tree.chooseLeaf(chosen.child, obj)
 }
 
-// adjustTree splits overflowing nodes and propagates the changes downwards.
+// adjustTree splits overflowing nodes and propagates the changes upwards.
 func (tree *Rtree) adjustTree(n *node) {
+	if n == &tree.root {
+		return
+	}
 
+	n.resizeBoundingBox()
+	tree.adjustTree(n.parent)
+}
+
+func (tree *Rtree) adjustTreeSplit(n, nn *node) {
+	
+}
+
+// resizeBoundingBox adjusts the bounding box of a node to its minimum
+// bounding rectangle.
+func (n *node) resizeBoundingBox() {
+	var ownEntry *entry
+	for i := range n.parent.entries {
+		if n.parent.entries[i].child == n {
+			ownEntry = &n.parent.entries[i]
+			break
+		}
+	}
+	childBoxes := []*Rect{}
+	for _, e := range n.entries {
+		childBoxes = append(childBoxes, e.bb)
+	}
+	ownEntry.bb = boundingBoxN(childBoxes...)
 }
 
 // split splits a node into two groups while attempting to minimize the
