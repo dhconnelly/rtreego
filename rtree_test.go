@@ -244,5 +244,29 @@ func TestAdjustTreeNoSplit(t *testing.T) {
 }
 
 func TestAdjustTreeSplitParent(t *testing.T) {
+	rt := NewTree(2, 1, 1)
 
+	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
+	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
+	left := node{&rt.root, false, []entry{r00, r01}}
+	leftEntry := entry{bb: Point{0, 0}.ToRect(0), child: &left}
+	
+	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
+	r11 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
+	right := node{&rt.root, false, []entry{r10, r11}}
+
+	rt.root.entries = []entry{leftEntry}
+	retl, retr := rt.adjustTree(&left, &right)
+
+	if len(retl.entries) != 1 || len(retr.entries) != 1 {
+		t.Errorf("Expected adjustTree distributed the entries")
+	}
+
+	lbb, rbb := retl.entries[0].bb, retr.entries[0].bb
+	if lbb.p.dist(Point{0, 0}) >= EPS || lbb.q.dist(Point{1, 2}) >= EPS {
+		t.Errorf("Expected left split got left entry")
+	}
+	if rbb.p.dist(Point{1, 0}) >= EPS || rbb.q.dist(Point{2, 2}) >= EPS {
+		t.Errorf("Expected right split got right entry")
+	}
 }
