@@ -16,10 +16,10 @@ func mustRect(p Point, widths []float64) *Rect {
 	return r
 }
 
-var chooseLeafTests = []struct{
+var chooseLeafTests = []struct {
 	bb0, bb1, bb2 *Rect // leaf bounding boxes
-	exp int // expected chosen leaf
-	desc string
+	exp           int   // expected chosen leaf
+	desc          string
 }{
 	{
 		mustRect(Point{1, 1, 1}, []float64{1, 1, 1}),
@@ -56,13 +56,13 @@ func TestChooseLeaf(t *testing.T) {
 	for _, test := range chooseLeafTests {
 		rt := Rtree{}
 		rt.root = node{}
-		
+
 		leaf0 := &node{&rt.root, true, []entry{}}
 		entry0 := entry{test.bb0, leaf0, nil}
-		
+
 		leaf1 := &node{&rt.root, true, []entry{}}
 		entry1 := entry{test.bb1, leaf1, nil}
-		
+
 		leaf2 := &node{&rt.root, true, []entry{}}
 		entry2 := entry{test.bb2, leaf2, nil}
 
@@ -200,7 +200,7 @@ func TestAdjustTreeNoPreviousSplit(t *testing.T) {
 	entries := []entry{r00, r01, r10}
 	n := node{&rt.root, false, entries}
 	rt.root.entries = []entry{entry{bb: Point{0, 0}.ToRect(0), child: &n}}
-	
+
 	rt.adjustTree(&n, nil)
 
 	e := &rt.root.entries[0]
@@ -217,7 +217,7 @@ func TestAdjustTreeNoSplit(t *testing.T) {
 	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
 	left := node{&rt.root, false, []entry{r00, r01}}
 	leftEntry := entry{bb: Point{0, 0}.ToRect(0), child: &left}
-	
+
 	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
 	r11 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
 	right := node{&rt.root, false, []entry{r10, r11}}
@@ -250,7 +250,7 @@ func TestAdjustTreeSplitParent(t *testing.T) {
 	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
 	left := node{&rt.root, false, []entry{r00, r01}}
 	leftEntry := entry{bb: Point{0, 0}.ToRect(0), child: &left}
-	
+
 	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
 	r11 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
 	right := node{&rt.root, false, []entry{r10, r11}}

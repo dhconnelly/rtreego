@@ -36,15 +36,15 @@ func (tree *Rtree) Size() int {
 // node represents a tree node of an Rtree.
 type node struct {
 	parent  *node
-	leaf bool
+	leaf    bool
 	entries []entry
 }
 
 // entry represents a spatial index record stored in a tree node.
 type entry struct {
-	bb     *Rect     // bounding-box of all children of this entry
-	child  *node
-	obj *Spatial
+	bb    *Rect // bounding-box of all children of this entry
+	child *node
+	obj   *Spatial
 }
 
 // Any type that implements Spatial can be stored in an Rtree and queried.
@@ -156,9 +156,9 @@ func (n *node) split(minGroupSize int) (left, right *node) {
 		next := pickNext(left, right, remaining)
 		e := remaining[next]
 
-		if len(remaining) + len(left.entries) <= minGroupSize {
+		if len(remaining)+len(left.entries) <= minGroupSize {
 			assign(e, left)
-		} else if len(remaining) + len(right.entries) <= minGroupSize {
+		} else if len(remaining)+len(right.entries) <= minGroupSize {
 			assign(e, right)
 		} else {
 			assignGroup(e, left, right)
@@ -166,7 +166,7 @@ func (n *node) split(minGroupSize int) (left, right *node) {
 
 		remaining = append(remaining[:next], remaining[next+1:]...)
 	}
-	
+
 	return
 }
 
