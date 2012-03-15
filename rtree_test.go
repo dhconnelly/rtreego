@@ -191,7 +191,7 @@ func TestAssignGroupFewerEntries(t *testing.T) {
 	}
 }
 
-func TestAdjustTreeNoSplit(t *testing.T) {
+func TestAdjustTreeNoPreviousSplit(t *testing.T) {
 	rt := Rtree{}
 
 	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
@@ -210,6 +210,39 @@ func TestAdjustTreeNoSplit(t *testing.T) {
 	}
 }
 
-func TestAdjustTree(t *testing.T) {
+func TestAdjustTreeNoSplit(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+
+	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
+	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
+	left := node{&rt.root, false, []entry{r00, r01}}
+	leftEntry := entry{bb: Point{0, 0}.ToRect(0), child: &left}
+	
+	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
+	r11 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
+	right := node{&rt.root, false, []entry{r10, r11}}
+
+	rt.root.entries = []entry{leftEntry}
+	retl, retr := rt.adjustTree(&left, &right)
+
+	if retl != &rt.root || retr != nil {
+		t.Errorf("Expected adjustTree didn't split the root")
+	}
+
+	entries := rt.root.entries
+	if entries[0].child != &left || entries[1].child != &right {
+		t.Errorf("Expected adjustTree keeps left and adds n in parent")
+	}
+
+	lbb, rbb := entries[0].bb, entries[1].bb
+	if lbb.p.dist(Point{0, 0}) >= EPS || lbb.q.dist(Point{1, 2}) >= EPS {
+		t.Errorf("Expected adjustTree to adjust left bb")
+	}
+	if rbb.p.dist(Point{1, 0}) >= EPS || rbb.q.dist(Point{2, 2}) >= EPS {
+		t.Errorf("Expected adjustTree to adjust right bb")
+	}
+}
+
+func TestAdjustTreeSplitParent(t *testing.T) {
 
 }

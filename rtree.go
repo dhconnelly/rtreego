@@ -87,26 +87,30 @@ func (tree *Rtree) chooseLeaf(n *node, obj Spatial) *node {
 
 // adjustTree splits overflowing nodes and propagates the changes upwards.
 func (tree *Rtree) adjustTree(n, nn *node) (*node, *node) {
+	// Let the caller handle root adjustments.
 	if n == &tree.root {
 		return n, nn
 	}
-	
-	n.resizeBoundingBox()
 
+	// Re-size the bounding box of n to account for lower-level changes.
+	n.getEntry().bb = n.computeBoundingBox()
+
+	// If nn is nil, then we're just propagating changes upwards.
 	if nn == nil {
-		// no merging to do
 		return tree.adjustTree(n.parent, nil)
 	}
 
-	// make new entry for the split node nn and add to parent
-	enn := entry{n.computeBoundingBox(), nn, nil}
+	// Otherwise, these are two nodes resulting from a split.
+	// n was reused as the "left" node, but we need to add nn to n.parent.
+	enn := entry{nn.computeBoundingBox(), nn, nil}
 	n.parent.entries = append(n.parent.entries, enn)
 
-	// if the new entry overflows the parent, split the parent
+	// If the new entry overflows the parent, split the parent and propagate.
 	if len(n.parent.entries) > tree.MaxChildren {
 		return tree.adjustTree(n.parent.split(tree.MinChildren))
 	}
 
+	// Otherwise keep propagating changes upwards.
 	return tree.adjustTree(n.parent, nil)
 }
 
@@ -122,12 +126,6 @@ func (n *node) getEntry() *entry {
 	return e
 }
 
-// resizeBoundingBox adjusts the bounding box of a node to its minimum
-// bounding rectangle.
-func (n *node) resizeBoundingBox() {
-	n.getEntry().bb = n.computeBoundingBox()
-}
-
 // computeBoundingBox finds the MBR of the children of n.
 func (n *node) computeBoundingBox() *Rect {
 	childBoxes := []*Rect{}
@@ -140,21 +138,24 @@ func (n *node) computeBoundingBox() *Rect {
 // split splits a node into two groups while attempting to minimize the
 // bounding-box area of the resulting groups.
 func (n *node) split(minGroupSize int) (left, right *node) {
+	// find the initial split
 	l, r := n.pickSeeds()
 	leftSeed, rightSeed := n.entries[l], n.entries[r]
-
-	left = &node{entries: []entry{leftSeed}}
-	right = &node{entries: []entry{rightSeed}}
 
 	// get the entries to be divided between left and right
 	remaining := append(n.entries[:l], n.entries[l+1:r]...)
 	remaining = append(remaining, n.entries[r+1:]...)
-	
+
+	// setup the new split nodes, but re-use n as the left node
+	left = n
+	left.entries = []entry{leftSeed}
+	right = &node{n.parent, n.leaf, []entry{rightSeed}}
+
+	// distribute all of n's old entries into left and right.
 	for len(remaining) > 0 {
 		next := pickNext(left, right, remaining)
 		e := remaining[next]
 
-		// check for underflow
 		if len(remaining) + len(left.entries) <= minGroupSize {
 			assign(e, left)
 		} else if len(remaining) + len(right.entries) <= minGroupSize {
