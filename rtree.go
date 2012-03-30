@@ -7,6 +7,7 @@ package rtreego
 
 import (
 	"math"
+	"fmt"
 )
 
 // Rtree represents an R-tree, a balanced search tree for storing and querying
@@ -23,7 +24,7 @@ type Rtree struct {
 // NewTree creates a new R-tree instance.  
 func NewTree(Dim, MinChildren, MaxChildren int) *Rtree {
 	rt := Rtree{Dim: Dim, MinChildren: MinChildren, MaxChildren: MaxChildren}
-	rt.root.entries = make([]entry, MinChildren)
+	rt.root.entries = []entry{}
 	rt.root.leaf = true
 	return &rt
 }
@@ -33,6 +34,10 @@ func (tree *Rtree) Size() int {
 	return tree.size
 }
 
+func (tree *Rtree) String() string {
+	return "foo"
+}
+
 // node represents a tree node of an Rtree.
 type node struct {
 	parent  *node
@@ -40,11 +45,24 @@ type node struct {
 	entries []entry
 }
 
+func (n *node) String() string {
+	return fmt.Sprintf("node{parent: %p, leaf: %v, entries: %v}", n.parent, n.leaf, n.entries)
+}
+
 // entry represents a spatial index record stored in a tree node.
 type entry struct {
 	bb    *Rect // bounding-box of all children of this entry
 	child *node
-	obj   *Spatial
+	obj   Spatial
+}
+
+func (e entry) String() string {
+	if e.child != nil {
+		return fmt.Sprintf("entry{bb: %v, child: %v}", e.bb, e.child)
+		//return "bar"
+	}
+	return fmt.Sprintf("entry{bb: %v, obj: %v}", e.bb, e.obj)
+	//return fmt.Sprintf("baz")
 }
 
 // Any type that implements Spatial can be stored in an Rtree and queried.
@@ -61,6 +79,26 @@ type Spatial interface {
 // Implemented per Section 3.2 of "R-trees: A Dynamic Index Structure for
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
 func (tree *Rtree) Insert(obj Spatial) error {
+	leaf := tree.chooseLeaf(&tree.root, obj)
+	leaf.entries = append(leaf.entries, entry{obj.Bounds(), nil, obj})
+	var split *node
+	if len(leaf.entries) > tree.MaxChildren {
+		leaf, split = leaf.split(tree.MinChildren)
+	}
+	root, splitRoot := tree.adjustTree(leaf, split)
+	if splitRoot != nil {
+		oldRoot := *root
+		tree.root = node{
+			parent: nil,
+			entries: []entry{
+				entry{bb: oldRoot.computeBoundingBox(), child: &oldRoot},
+				entry{bb: splitRoot.computeBoundingBox(), child: splitRoot},
+			},
+		}
+		oldRoot.parent = &tree.root
+		splitRoot.parent = &tree.root
+	}
+	tree.size++
 	return nil
 }
 

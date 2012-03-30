@@ -270,3 +270,74 @@ func TestAdjustTreeSplitParent(t *testing.T) {
 		t.Errorf("Expected right split got right entry")
 	}
 }
+
+func TestInsertNoSplit(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	thing := mustRect(Point{0, 0}, []float64{2, 1})
+	rt.Insert(thing)
+	
+	if rt.Size() != 1 {
+		t.Errorf("Insert failed to increase tree size")
+	}
+
+	if len(rt.root.entries) != 1 || rt.root.entries[0].obj.(*Rect) != thing {
+		t.Errorf("Insert failed to insert thing into root entries")
+	}
+}
+
+func TestInsertSplitRoot(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	if rt.Size() != 6 {
+		t.Errorf("Insert failed to insert")
+	}
+
+	if len(rt.root.entries) != 2 {
+		t.Errorf("Insert failed to split")
+	}
+
+	left, right := rt.root.entries[0].child, rt.root.entries[1].child
+	if len(left.entries) != 3 || len(right.entries) != 3 {
+		t.Errorf("Insert failed to split evenly")
+	}
+}
+
+func TestInsertSplit(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{10, 10}, []float64{2, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	if rt.Size() != 7 {
+		t.Errorf("Insert failed to insert")
+	}
+
+	if len(rt.root.entries) != 3 {
+		t.Errorf("Insert failed to split")
+	}
+
+	a, b, c := rt.root.entries[0], rt.root.entries[1], rt.root.entries[2]
+	if len(a.child.entries) != 3 || len(b.child.entries) != 3 || len(c.child.entries) != 1 {
+		t.Errorf("Insert failed to split evenly")
+	}
+}
