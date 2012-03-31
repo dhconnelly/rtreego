@@ -397,3 +397,29 @@ func TestInsertSplitSecondLevel(t *testing.T) {
 		t.Errorf("Insert failed to adjust properly")
 	}
 }
+
+func TestFindLeaf(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{0, 6}, []float64{1, 2}),
+		mustRect(Point{1, 6}, []float64{1, 2}),
+		mustRect(Point{0, 8}, []float64{1, 2}),
+		mustRect(Point{1, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	obj := mustRect(Point{1.5, 7}, []float64{0.5, 0.5})
+	leaf := rt.findLeaf(&rt.root, obj)
+	expected := rt.root.entries[0].child.entries[1].child
+	if leaf != expected {
+		t.Errorf("Failed to locate leaf containing %v", obj)
+	}
+}

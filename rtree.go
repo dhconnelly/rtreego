@@ -307,6 +307,14 @@ func (tree *Rtree) Delete(obj Spatial) (ok bool, err error) {
 
 // findLeaf finds the leaf node containing obj.
 func (tree *Rtree) findLeaf(n *node, obj Spatial) *node {
+	if n.leaf {
+		return n
+	}
+	for _, e := range n.entries {
+		if e.bb.containsRect(obj.Bounds()) {
+			return tree.findLeaf(e.child, obj)
+		}
+	}
 	return nil
 }
 
