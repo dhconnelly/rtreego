@@ -6,8 +6,8 @@
 package rtreego
 
 import (
-	"math"
 	"fmt"
+	"math"
 )
 
 // Rtree represents an R-tree, a balanced search tree for storing and querying
@@ -38,6 +38,22 @@ func (tree *Rtree) String() string {
 	return "foo"
 }
 
+// Depth returns the maximum depth of tree.
+func (tree *Rtree) Depth() int {
+	var nodeDepth func(n *node) int
+	nodeDepth = func(n *node) int {
+		if n.leaf {
+			return 1
+		}
+		sum := 0
+		for _, e := range n.entries {
+			sum += nodeDepth(e.child)
+		}
+		return sum
+	}
+	return nodeDepth(&tree.root)
+}
+
 // node represents a tree node of an Rtree.
 type node struct {
 	parent  *node
@@ -46,7 +62,7 @@ type node struct {
 }
 
 func (n *node) String() string {
-	return fmt.Sprintf("node{parent: %p, leaf: %v, entries: %v}", n.parent, n.leaf, n.entries)
+	return fmt.Sprintf("node{leaf: %v, entries: %v}", n.leaf, n.entries)
 }
 
 // entry represents a spatial index record stored in a tree node.
@@ -59,10 +75,8 @@ type entry struct {
 func (e entry) String() string {
 	if e.child != nil {
 		return fmt.Sprintf("entry{bb: %v, child: %v}", e.bb, e.child)
-		//return "bar"
 	}
 	return fmt.Sprintf("entry{bb: %v, obj: %v}", e.bb, e.obj)
-	//return fmt.Sprintf("baz")
 }
 
 // Any type that implements Spatial can be stored in an Rtree and queried.

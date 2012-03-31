@@ -1,6 +1,8 @@
 package rtreego
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -14,6 +16,25 @@ func mustRect(p Point, widths []float64) *Rect {
 		panic(err)
 	}
 	return r
+}
+
+func printNode(n *node, level int) {
+	padding := strings.Repeat("\t", level)
+	fmt.Printf("%sLeaf: %t\n%sEntries:\n", padding, n.leaf, padding)
+	for _, e := range n.entries {
+		printEntry(e, level+1)
+	}
+}
+
+func printEntry(e entry, level int) {
+	padding := strings.Repeat("\t", level)
+	fmt.Printf("%sBB: %v\n", padding, e.bb)
+	if e.child != nil {
+		printNode(e.child, level)
+	} else {
+		fmt.Printf("%sObject: %p\n", padding, e.obj)
+	}
+	fmt.Println()
 }
 
 var chooseLeafTests = []struct {
@@ -275,7 +296,7 @@ func TestInsertNoSplit(t *testing.T) {
 	rt := NewTree(2, 3, 3)
 	thing := mustRect(Point{0, 0}, []float64{2, 1})
 	rt.Insert(thing)
-	
+
 	if rt.Size() != 1 {
 		t.Errorf("Insert failed to increase tree size")
 	}
@@ -337,7 +358,42 @@ func TestInsertSplit(t *testing.T) {
 	}
 
 	a, b, c := rt.root.entries[0], rt.root.entries[1], rt.root.entries[2]
-	if len(a.child.entries) != 3 || len(b.child.entries) != 3 || len(c.child.entries) != 1 {
+	if len(a.child.entries) != 3 ||
+		len(b.child.entries) != 3 ||
+		len(c.child.entries) != 1 {
 		t.Errorf("Insert failed to split evenly")
+	}
+}
+
+func TestInsertSplitSecondLevel(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{0, 6}, []float64{1, 2}),
+		mustRect(Point{1, 6}, []float64{1, 2}),
+		mustRect(Point{0, 8}, []float64{1, 2}),
+		mustRect(Point{1, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	if rt.Size() != 10 {
+		t.Errorf("Insert failed to insert")
+	}
+
+	// should split root
+	if len(rt.root.entries) != 2 {
+		t.Errorf("Insert failed to split the root")
+	}
+
+	// root level + split level + entries level + objs level
+	if rt.Depth() != 4 {
+		t.Errorf("Insert failed to adjust properly")
 	}
 }
