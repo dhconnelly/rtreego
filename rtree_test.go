@@ -20,6 +20,8 @@ func mustRect(p Point, widths []float64) *Rect {
 
 func printNode(n *node, level int) {
 	padding := strings.Repeat("\t", level)
+	fmt.Printf("%sNode: %p\n", padding, n)
+	fmt.Printf("%sParent: %p\n", padding, n.parent)
 	fmt.Printf("%sLeaf: %t\n%sEntries:\n", padding, n.leaf, padding)
 	for _, e := range n.entries {
 		printEntry(e, level+1)
@@ -68,7 +70,7 @@ var chooseLeafTests = []struct {
 func TestChooseLeafEmpty(t *testing.T) {
 	rt := NewTree(3, 5, 10)
 	obj := Point{0, 0, 0}.ToRect(0.5)
-	if leaf := rt.chooseLeaf(&rt.root, obj); leaf != &rt.root {
+	if leaf := rt.chooseLeaf(rt.root, obj); leaf != rt.root {
 		t.Errorf("expected chooseLeaf of empty tree to return root")
 	}
 }
@@ -76,15 +78,15 @@ func TestChooseLeafEmpty(t *testing.T) {
 func TestChooseLeaf(t *testing.T) {
 	for _, test := range chooseLeafTests {
 		rt := Rtree{}
-		rt.root = node{}
+		rt.root = &node{}
 
-		leaf0 := &node{&rt.root, true, []entry{}}
+		leaf0 := &node{rt.root, true, []entry{}}
 		entry0 := entry{test.bb0, leaf0, nil}
 
-		leaf1 := &node{&rt.root, true, []entry{}}
+		leaf1 := &node{rt.root, true, []entry{}}
 		entry1 := entry{test.bb1, leaf1, nil}
 
-		leaf2 := &node{&rt.root, true, []entry{}}
+		leaf2 := &node{rt.root, true, []entry{}}
 		entry2 := entry{test.bb2, leaf2, nil}
 
 		rt.root.entries = []entry{entry0, entry1, entry2}
@@ -92,7 +94,7 @@ func TestChooseLeaf(t *testing.T) {
 		obj := Point{0, 0, 0}.ToRect(0.5)
 
 		expected := rt.root.entries[test.exp].child
-		if leaf := rt.chooseLeaf(&rt.root, obj); leaf != expected {
+		if leaf := rt.chooseLeaf(rt.root, obj); leaf != expected {
 			t.Errorf("%s: expected %d", test.desc, test.exp)
 		}
 	}
@@ -213,18 +215,18 @@ func TestAssignGroupFewerEntries(t *testing.T) {
 }
 
 func TestAdjustTreeNoPreviousSplit(t *testing.T) {
-	rt := Rtree{}
+	rt := Rtree{root: &node{}}
 
 	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
 	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
 	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
 	entries := []entry{r00, r01, r10}
-	n := node{&rt.root, false, entries}
+	n := node{rt.root, false, entries}
 	rt.root.entries = []entry{entry{bb: Point{0, 0}.ToRect(0), child: &n}}
 
 	rt.adjustTree(&n, nil)
 
-	e := &rt.root.entries[0]
+	e := rt.root.entries[0]
 	p, q := Point{0, 0}, Point{2, 2}
 	if p.dist(e.bb.p) >= EPS || q.dist(e.bb.q) >= EPS {
 		t.Errorf("Expected adjustTree to fit %v,%v,%v", r00.bb, r01.bb, r10.bb)
@@ -236,17 +238,17 @@ func TestAdjustTreeNoSplit(t *testing.T) {
 
 	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
 	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
-	left := node{&rt.root, false, []entry{r00, r01}}
+	left := node{rt.root, false, []entry{r00, r01}}
 	leftEntry := entry{bb: Point{0, 0}.ToRect(0), child: &left}
 
 	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
 	r11 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
-	right := node{&rt.root, false, []entry{r10, r11}}
+	right := node{rt.root, false, []entry{r10, r11}}
 
 	rt.root.entries = []entry{leftEntry}
 	retl, retr := rt.adjustTree(&left, &right)
 
-	if retl != &rt.root || retr != nil {
+	if retl != rt.root || retr != nil {
 		t.Errorf("Expected adjustTree didn't split the root")
 	}
 
@@ -269,12 +271,12 @@ func TestAdjustTreeSplitParent(t *testing.T) {
 
 	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
 	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
-	left := node{&rt.root, false, []entry{r00, r01}}
+	left := node{rt.root, false, []entry{r00, r01}}
 	leftEntry := entry{bb: Point{0, 0}.ToRect(0), child: &left}
 
 	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
 	r11 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
-	right := node{&rt.root, false, []entry{r10, r11}}
+	right := node{rt.root, false, []entry{r10, r11}}
 
 	rt.root.entries = []entry{leftEntry}
 	retl, retr := rt.adjustTree(&left, &right)
@@ -396,6 +398,20 @@ func TestInsertSplitSecondLevel(t *testing.T) {
 	if rt.Depth() != 4 {
 		t.Errorf("Insert failed to adjust properly")
 	}
+
+	var checkParents func(n *node)
+	checkParents = func(n *node) {
+		if n.leaf {
+			return
+		}
+		for _, e := range n.entries {
+			if e.child.parent != n {
+				t.Errorf("Insert failed to update parent pointers")
+			}
+			checkParents(e.child)
+		}
+	}
+	checkParents(rt.root)
 }
 
 func TestFindLeaf(t *testing.T) {
@@ -417,7 +433,7 @@ func TestFindLeaf(t *testing.T) {
 	}
 
 	obj := mustRect(Point{1.5, 7}, []float64{0.5, 0.5})
-	leaf := rt.findLeaf(&rt.root, obj)
+	leaf := rt.findLeaf(rt.root, obj)
 	expected := rt.root.entries[0].child.entries[1].child
 	if leaf != expected {
 		t.Errorf("Failed to locate leaf containing %v", obj)

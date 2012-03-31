@@ -17,13 +17,14 @@ type Rtree struct {
 	Dim         int
 	MinChildren int
 	MaxChildren int
-	root        node
+	root        *node
 	size        int
 }
 
 // NewTree creates a new R-tree instance.  
 func NewTree(Dim, MinChildren, MaxChildren int) *Rtree {
 	rt := Rtree{Dim: Dim, MinChildren: MinChildren, MaxChildren: MaxChildren}
+	rt.root = &node{}
 	rt.root.entries = []entry{}
 	rt.root.leaf = true
 	return &rt
@@ -51,7 +52,7 @@ func (tree *Rtree) Depth() int {
 		}
 		return sum
 	}
-	return nodeDepth(&tree.root)
+	return nodeDepth(tree.root)
 }
 
 // node represents a tree node of an Rtree.
@@ -93,7 +94,7 @@ type Spatial interface {
 // Implemented per Section 3.2 of "R-trees: A Dynamic Index Structure for
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
 func (tree *Rtree) Insert(obj Spatial) error {
-	leaf := tree.chooseLeaf(&tree.root, obj)
+	leaf := tree.chooseLeaf(tree.root, obj)
 	leaf.entries = append(leaf.entries, entry{obj.Bounds(), nil, obj})
 	var split *node
 	if len(leaf.entries) > tree.MaxChildren {
@@ -101,16 +102,16 @@ func (tree *Rtree) Insert(obj Spatial) error {
 	}
 	root, splitRoot := tree.adjustTree(leaf, split)
 	if splitRoot != nil {
-		oldRoot := *root
-		tree.root = node{
+		oldRoot := root
+		tree.root = &node{
 			parent: nil,
 			entries: []entry{
-				entry{bb: oldRoot.computeBoundingBox(), child: &oldRoot},
+				entry{bb: oldRoot.computeBoundingBox(), child: oldRoot},
 				entry{bb: splitRoot.computeBoundingBox(), child: splitRoot},
 			},
 		}
-		oldRoot.parent = &tree.root
-		splitRoot.parent = &tree.root
+		oldRoot.parent = tree.root
+		splitRoot.parent = tree.root
 	}
 	tree.size++
 	return nil
@@ -140,7 +141,7 @@ func (tree *Rtree) chooseLeaf(n *node, obj Spatial) *node {
 // adjustTree splits overflowing nodes and propagates the changes upwards.
 func (tree *Rtree) adjustTree(n, nn *node) (*node, *node) {
 	// Let the caller handle root adjustments.
-	if n == &tree.root {
+	if n == tree.root {
 		return n, nn
 	}
 
@@ -203,6 +204,14 @@ func (n *node) split(minGroupSize int) (left, right *node) {
 	left.entries = []entry{leftSeed}
 	right = &node{n.parent, n.leaf, []entry{rightSeed}}
 
+	// TODO
+	if rightSeed.child != nil {
+		rightSeed.child.parent = right
+	}
+	if leftSeed.child != nil {
+		leftSeed.child.parent = left
+	}
+
 	// distribute all of n's old entries into left and right.
 	for len(remaining) > 0 {
 		next := pickNext(left, right, remaining)
@@ -223,6 +232,9 @@ func (n *node) split(minGroupSize int) (left, right *node) {
 }
 
 func assign(e entry, group *node) {
+	if e.child != nil {
+		e.child.parent = group
+	}
 	group.entries = append(group.entries, e)
 }
 
@@ -320,5 +332,5 @@ func (tree *Rtree) findLeaf(n *node, obj Spatial) *node {
 
 // condenseTree deletes underflowing nodes and propagates the changes upwards.
 func (tree *Rtree) condenseTree(n *node) *node {
-	return nil
+       return nil
 }
