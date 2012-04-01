@@ -81,13 +81,13 @@ func TestChooseLeaf(t *testing.T) {
 		rt.root = &node{}
 
 		leaf0 := &node{rt.root, true, []entry{}}
-		entry0 := entry{test.bb0, leaf0, nil}
+		entry0 := entry{test.bb0, leaf0, nil, 1}
 
 		leaf1 := &node{rt.root, true, []entry{}}
-		entry1 := entry{test.bb1, leaf1, nil}
+		entry1 := entry{test.bb1, leaf1, nil, 1}
 
 		leaf2 := &node{rt.root, true, []entry{}}
-		entry2 := entry{test.bb2, leaf2, nil}
+		entry2 := entry{test.bb2, leaf2, nil, 1}
 
 		rt.root.entries = []entry{entry0, entry1, entry2}
 
@@ -394,8 +394,8 @@ func TestInsertSplitSecondLevel(t *testing.T) {
 		t.Errorf("Insert failed to split the root")
 	}
 
-	// root level + split level + entries level + objs level
-	if rt.Depth() != 4 {
+	// split level + entries level + objs level
+	if rt.Depth() != 3 {
 		t.Errorf("Insert failed to adjust properly")
 	}
 

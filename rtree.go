@@ -19,11 +19,13 @@ type Rtree struct {
 	MaxChildren int
 	root        *node
 	size        int
+	height int
 }
 
 // NewTree creates a new R-tree instance.  
 func NewTree(Dim, MinChildren, MaxChildren int) *Rtree {
 	rt := Rtree{Dim: Dim, MinChildren: MinChildren, MaxChildren: MaxChildren}
+	rt.height = 1
 	rt.root = &node{}
 	rt.root.entries = []entry{}
 	rt.root.leaf = true
@@ -41,18 +43,7 @@ func (tree *Rtree) String() string {
 
 // Depth returns the maximum depth of tree.
 func (tree *Rtree) Depth() int {
-	var nodeDepth func(n *node) int
-	nodeDepth = func(n *node) int {
-		if n.leaf {
-			return 1
-		}
-		sum := 0
-		for _, e := range n.entries {
-			sum += nodeDepth(e.child)
-		}
-		return sum
-	}
-	return nodeDepth(tree.root)
+	return tree.height
 }
 
 // node represents a tree node of an Rtree.
@@ -71,6 +62,7 @@ type entry struct {
 	bb    *Rect // bounding-box of all children of this entry
 	child *node
 	obj   Spatial
+	level int // entry depth in Rtree
 }
 
 func (e entry) String() string {
@@ -95,7 +87,7 @@ type Spatial interface {
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
 func (tree *Rtree) Insert(obj Spatial) error {
 	leaf := tree.chooseLeaf(tree.root, obj)
-	leaf.entries = append(leaf.entries, entry{obj.Bounds(), nil, obj})
+	leaf.entries = append(leaf.entries, entry{obj.Bounds(), nil, obj, 1})
 	var split *node
 	if len(leaf.entries) > tree.MaxChildren {
 		leaf, split = leaf.split(tree.MinChildren)
@@ -103,11 +95,20 @@ func (tree *Rtree) Insert(obj Spatial) error {
 	root, splitRoot := tree.adjustTree(leaf, split)
 	if splitRoot != nil {
 		oldRoot := root
+		tree.height++
 		tree.root = &node{
 			parent: nil,
 			entries: []entry{
-				entry{bb: oldRoot.computeBoundingBox(), child: oldRoot},
-				entry{bb: splitRoot.computeBoundingBox(), child: splitRoot},
+				entry{
+					bb: oldRoot.computeBoundingBox(),
+					child: oldRoot,
+					level: tree.height,
+				},
+				entry{
+					bb: splitRoot.computeBoundingBox(),
+					child: splitRoot,
+					level: tree.height,
+				},
 			},
 		}
 		oldRoot.parent = tree.root
@@ -146,7 +147,8 @@ func (tree *Rtree) adjustTree(n, nn *node) (*node, *node) {
 	}
 
 	// Re-size the bounding box of n to account for lower-level changes.
-	n.getEntry().bb = n.computeBoundingBox()
+	en := n.getEntry()
+	en.bb = n.computeBoundingBox()
 
 	// If nn is nil, then we're just propagating changes upwards.
 	if nn == nil {
@@ -155,7 +157,7 @@ func (tree *Rtree) adjustTree(n, nn *node) (*node, *node) {
 
 	// Otherwise, these are two nodes resulting from a split.
 	// n was reused as the "left" node, but we need to add nn to n.parent.
-	enn := entry{nn.computeBoundingBox(), nn, nil}
+	enn := entry{nn.computeBoundingBox(), nn, nil, en.level}
 	n.parent.entries = append(n.parent.entries, enn)
 
 	// If the new entry overflows the parent, split the parent and propagate.
