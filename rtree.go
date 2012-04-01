@@ -29,6 +29,7 @@ func NewTree(Dim, MinChildren, MaxChildren int) *Rtree {
 	rt.root = &node{}
 	rt.root.entries = []entry{}
 	rt.root.leaf = true
+	rt.root.level = 1
 	return &rt
 }
 
@@ -51,6 +52,7 @@ type node struct {
 	parent  *node
 	leaf    bool
 	entries []entry
+	level int // node depth in the Rtree
 }
 
 func (n *node) String() string {
@@ -62,7 +64,6 @@ type entry struct {
 	bb    *Rect // bounding-box of all children of this entry
 	child *node
 	obj   Spatial
-	level int // entry depth in Rtree
 }
 
 func (e entry) String() string {
@@ -87,7 +88,7 @@ type Spatial interface {
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
 func (tree *Rtree) Insert(obj Spatial) error {
 	leaf := tree.chooseLeaf(tree.root, obj)
-	leaf.entries = append(leaf.entries, entry{obj.Bounds(), nil, obj, 1})
+	leaf.entries = append(leaf.entries, entry{obj.Bounds(), nil, obj})
 	var split *node
 	if len(leaf.entries) > tree.MaxChildren {
 		leaf, split = leaf.split(tree.MinChildren)
@@ -98,17 +99,10 @@ func (tree *Rtree) Insert(obj Spatial) error {
 		tree.height++
 		tree.root = &node{
 			parent: nil,
+			level: tree.height,
 			entries: []entry{
-				entry{
-					bb: oldRoot.computeBoundingBox(),
-					child: oldRoot,
-					level: tree.height,
-				},
-				entry{
-					bb: splitRoot.computeBoundingBox(),
-					child: splitRoot,
-					level: tree.height,
-				},
+				entry{bb: oldRoot.computeBoundingBox(), child: oldRoot},
+				entry{bb: splitRoot.computeBoundingBox(), child: splitRoot},
 			},
 		}
 		oldRoot.parent = tree.root
@@ -157,7 +151,7 @@ func (tree *Rtree) adjustTree(n, nn *node) (*node, *node) {
 
 	// Otherwise, these are two nodes resulting from a split.
 	// n was reused as the "left" node, but we need to add nn to n.parent.
-	enn := entry{nn.computeBoundingBox(), nn, nil, en.level}
+	enn := entry{nn.computeBoundingBox(), nn, nil}
 	n.parent.entries = append(n.parent.entries, enn)
 
 	// If the new entry overflows the parent, split the parent and propagate.
@@ -204,7 +198,12 @@ func (n *node) split(minGroupSize int) (left, right *node) {
 	// setup the new split nodes, but re-use n as the left node
 	left = n
 	left.entries = []entry{leftSeed}
-	right = &node{n.parent, n.leaf, []entry{rightSeed}}
+	right = &node{
+		parent: n.parent,
+		leaf: n.leaf,
+		level: n.level,
+		entries: []entry{rightSeed},
+	}
 
 	// TODO
 	if rightSeed.child != nil {

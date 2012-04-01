@@ -80,14 +80,14 @@ func TestChooseLeaf(t *testing.T) {
 		rt := Rtree{}
 		rt.root = &node{}
 
-		leaf0 := &node{rt.root, true, []entry{}}
-		entry0 := entry{test.bb0, leaf0, nil, 1}
+		leaf0 := &node{rt.root, true, []entry{}, 1}
+		entry0 := entry{test.bb0, leaf0, nil}
 
-		leaf1 := &node{rt.root, true, []entry{}}
-		entry1 := entry{test.bb1, leaf1, nil, 1}
+		leaf1 := &node{rt.root, true, []entry{}, 1}
+		entry1 := entry{test.bb1, leaf1, nil}
 
-		leaf2 := &node{rt.root, true, []entry{}}
-		entry2 := entry{test.bb2, leaf2, nil, 1}
+		leaf2 := &node{rt.root, true, []entry{}, 1}
+		entry2 := entry{test.bb2, leaf2, nil}
 
 		rt.root.entries = []entry{entry0, entry1, entry2}
 
@@ -221,7 +221,7 @@ func TestAdjustTreeNoPreviousSplit(t *testing.T) {
 	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
 	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
 	entries := []entry{r00, r01, r10}
-	n := node{rt.root, false, entries}
+	n := node{rt.root, false, entries, 1}
 	rt.root.entries = []entry{entry{bb: Point{0, 0}.ToRect(0), child: &n}}
 
 	rt.adjustTree(&n, nil)
@@ -238,12 +238,12 @@ func TestAdjustTreeNoSplit(t *testing.T) {
 
 	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
 	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
-	left := node{rt.root, false, []entry{r00, r01}}
+	left := node{rt.root, false, []entry{r00, r01}, 1}
 	leftEntry := entry{bb: Point{0, 0}.ToRect(0), child: &left}
 
 	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
 	r11 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
-	right := node{rt.root, false, []entry{r10, r11}}
+	right := node{rt.root, false, []entry{r10, r11}, 1}
 
 	rt.root.entries = []entry{leftEntry}
 	retl, retr := rt.adjustTree(&left, &right)
@@ -271,12 +271,12 @@ func TestAdjustTreeSplitParent(t *testing.T) {
 
 	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
 	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
-	left := node{rt.root, false, []entry{r00, r01}}
+	left := node{rt.root, false, []entry{r00, r01}, 1}
 	leftEntry := entry{bb: Point{0, 0}.ToRect(0), child: &left}
 
 	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
 	r11 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
-	right := node{rt.root, false, []entry{r10, r11}}
+	right := node{rt.root, false, []entry{r10, r11}, 1}
 
 	rt.root.entries = []entry{leftEntry}
 	retl, retr := rt.adjustTree(&left, &right)
