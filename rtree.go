@@ -330,7 +330,51 @@ func (tree *Rtree) findLeaf(n *node, obj Spatial) *node {
 	return nil
 }
 
+func items(n *node) chan Spatial {
+	ch := make(chan Spatial)
+	go func() {
+		for _, e := range n.entries {
+			if n.leaf {
+				ch <- e.obj
+			} else {
+				for obj := range items(e.child) {
+					ch <- obj
+				}
+			}
+		}
+		close(ch)
+	}()
+	return ch
+}
+
 // condenseTree deletes underflowing nodes and propagates the changes upwards.
 func (tree *Rtree) condenseTree(n *node) *node {
-       return nil
+	deleted := []*node{}
+
+	for n != tree.root {
+		if len(n.entries) < tree.MinChildren {
+			// remove n from parent entries
+			deleted = append(deleted, n)
+			entries := []entry{}
+			for _, e := range n.parent.entries {
+				if e.child != n {
+					entries = append(entries, e)
+				}
+			}
+			n.parent.entries = entries
+		} else {
+			// just a child entry deletion, no underflow
+			n.getEntry().bb = n.computeBoundingBox()
+		}
+		n = n.parent
+	}
+
+	// TODO higher-level nodes must be higher in the tree?
+	for _, n := range deleted {
+		for obj := range items(n) {
+			tree.Insert(obj)
+		}
+	}
+	
+	return n
 }

@@ -439,3 +439,28 @@ func TestFindLeaf(t *testing.T) {
 		t.Errorf("Failed to locate leaf containing %v", obj)
 	}
 }
+
+func TestCondenseTreeEliminate(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{0, 6}, []float64{1, 2}),
+		mustRect(Point{1, 6}, []float64{1, 2}),
+		mustRect(Point{0, 8}, []float64{1, 2}),
+		mustRect(Point{1, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+	
+	// delete entry 2 from parent entries
+	printNode(rt.root, 0)
+	parent := rt.root.entries[0].child.entries[1].child
+	parent.entries = append(parent.entries[:2], parent.entries[3:]...)
+	printNode(rt.condenseTree(parent), 0)
+}
