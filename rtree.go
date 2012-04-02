@@ -19,14 +19,17 @@ type Rtree struct {
 	MaxChildren int
 	root        *node
 	size        int
+	height int
 }
 
 // NewTree creates a new R-tree instance.  
 func NewTree(Dim, MinChildren, MaxChildren int) *Rtree {
 	rt := Rtree{Dim: Dim, MinChildren: MinChildren, MaxChildren: MaxChildren}
+	rt.height = 1
 	rt.root = &node{}
 	rt.root.entries = []entry{}
 	rt.root.leaf = true
+	rt.root.level = 1
 	return &rt
 }
 
@@ -41,18 +44,7 @@ func (tree *Rtree) String() string {
 
 // Depth returns the maximum depth of tree.
 func (tree *Rtree) Depth() int {
-	var nodeDepth func(n *node) int
-	nodeDepth = func(n *node) int {
-		if n.leaf {
-			return 1
-		}
-		sum := 0
-		for _, e := range n.entries {
-			sum += nodeDepth(e.child)
-		}
-		return sum
-	}
-	return nodeDepth(tree.root)
+	return tree.height
 }
 
 // node represents a tree node of an Rtree.
@@ -60,6 +52,7 @@ type node struct {
 	parent  *node
 	leaf    bool
 	entries []entry
+	level int // node depth in the Rtree
 }
 
 func (n *node) String() string {
@@ -93,9 +86,15 @@ type Spatial interface {
 //
 // Implemented per Section 3.2 of "R-trees: A Dynamic Index Structure for
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
-func (tree *Rtree) Insert(obj Spatial) error {
-	leaf := tree.chooseLeaf(tree.root, obj)
-	leaf.entries = append(leaf.entries, entry{obj.Bounds(), nil, obj})
+func (tree *Rtree) Insert(obj Spatial) {
+	e := entry{obj.Bounds(), nil, obj}
+	tree.insert(e, 1)
+}
+
+// insert adds the specified entry to the tree at the specified level.
+func (tree *Rtree) insert(e entry, level int) {
+	leaf := tree.chooseNode(tree.root, e, level)
+	leaf.entries = append(leaf.entries, e)
 	var split *node
 	if len(leaf.entries) > tree.MaxChildren {
 		leaf, split = leaf.split(tree.MinChildren)
@@ -103,8 +102,10 @@ func (tree *Rtree) Insert(obj Spatial) error {
 	root, splitRoot := tree.adjustTree(leaf, split)
 	if splitRoot != nil {
 		oldRoot := root
+		tree.height++
 		tree.root = &node{
 			parent: nil,
+			level: tree.height,
 			entries: []entry{
 				entry{bb: oldRoot.computeBoundingBox(), child: oldRoot},
 				entry{bb: splitRoot.computeBoundingBox(), child: splitRoot},
@@ -114,28 +115,27 @@ func (tree *Rtree) Insert(obj Spatial) error {
 		splitRoot.parent = tree.root
 	}
 	tree.size++
-	return nil
 }
 
-// chooseLeaf finds the leaf node in which obj should be inserted.
-func (tree *Rtree) chooseLeaf(n *node, obj Spatial) *node {
-	if n.leaf {
+// chooseNode finds the node at the specified level to which e should be added.
+func (tree *Rtree) chooseNode(n *node, e entry, level int) *node {
+	if n.leaf || n.level == level {
 		return n
 	}
 
 	// find the entry whose bb needs least enlargement to include obj
 	diff := math.MaxFloat64
 	var chosen entry
-	for _, e := range n.entries {
-		bb := boundingBox(e.bb, obj.Bounds())
-		d := bb.size() - e.bb.size()
-		if d < diff || (d == diff && e.bb.size() < chosen.bb.size()) {
+	for _, en := range n.entries {
+		bb := boundingBox(en.bb, e.obj.Bounds())
+		d := bb.size() - en.bb.size()
+		if d < diff || (d == diff && en.bb.size() < chosen.bb.size()) {
 			diff = d
-			chosen = e
+			chosen = en
 		}
 	}
 
-	return tree.chooseLeaf(chosen.child, obj)
+	return tree.chooseNode(chosen.child, e, level)
 }
 
 // adjustTree splits overflowing nodes and propagates the changes upwards.
@@ -146,7 +146,8 @@ func (tree *Rtree) adjustTree(n, nn *node) (*node, *node) {
 	}
 
 	// Re-size the bounding box of n to account for lower-level changes.
-	n.getEntry().bb = n.computeBoundingBox()
+	en := n.getEntry()
+	en.bb = n.computeBoundingBox()
 
 	// If nn is nil, then we're just propagating changes upwards.
 	if nn == nil {
@@ -202,7 +203,12 @@ func (n *node) split(minGroupSize int) (left, right *node) {
 	// setup the new split nodes, but re-use n as the left node
 	left = n
 	left.entries = []entry{leftSeed}
-	right = &node{n.parent, n.leaf, []entry{rightSeed}}
+	right = &node{
+		parent: n.parent,
+		leaf: n.leaf,
+		level: n.level,
+		entries: []entry{rightSeed},
+	}
 
 	// TODO
 	if rightSeed.child != nil {

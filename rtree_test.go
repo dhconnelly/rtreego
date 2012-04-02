@@ -22,6 +22,7 @@ func printNode(n *node, level int) {
 	padding := strings.Repeat("\t", level)
 	fmt.Printf("%sNode: %p\n", padding, n)
 	fmt.Printf("%sParent: %p\n", padding, n.parent)
+	fmt.Printf("%sLevel: %d\n", padding, n.level)
 	fmt.Printf("%sLeaf: %t\n%sEntries:\n", padding, n.leaf, padding)
 	for _, e := range n.entries {
 		printEntry(e, level+1)
@@ -39,10 +40,11 @@ func printEntry(e entry, level int) {
 	fmt.Println()
 }
 
-var chooseLeafTests = []struct {
+var chooseLeafNodeTests = []struct {
 	bb0, bb1, bb2 *Rect // leaf bounding boxes
 	exp           int   // expected chosen leaf
 	desc          string
+	level int
 }{
 	{
 		mustRect(Point{1, 1, 1}, []float64{1, 1, 1}),
@@ -50,6 +52,7 @@ var chooseLeafTests = []struct {
 		mustRect(Point{3, 4, -5}, []float64{2, 0.9, 8}),
 		1,
 		"clear winner",
+		1,
 	},
 	{
 		mustRect(Point{-1, -1.5, -1}, []float64{0.5, 2.5025, 0.5}),
@@ -57,6 +60,7 @@ var chooseLeafTests = []struct {
 		mustRect(Point{3, 4, -5}, []float64{2, 0.9, 8}),
 		1,
 		"leaves tie",
+		1,
 	},
 	{
 		mustRect(Point{-1, -1.5, -1}, []float64{0.5, 2.5025, 0.5}),
@@ -64,37 +68,40 @@ var chooseLeafTests = []struct {
 		mustRect(Point{-1, -2, -3}, []float64{2, 4, 6}),
 		2,
 		"leaf contains obj",
+		1,
 	},
 }
 
-func TestChooseLeafEmpty(t *testing.T) {
+func TestChooseLeafNodeEmpty(t *testing.T) {
 	rt := NewTree(3, 5, 10)
 	obj := Point{0, 0, 0}.ToRect(0.5)
-	if leaf := rt.chooseLeaf(rt.root, obj); leaf != rt.root {
+	e := entry{obj, nil, obj}
+	if leaf := rt.chooseNode(rt.root, e, 1); leaf != rt.root {
 		t.Errorf("expected chooseLeaf of empty tree to return root")
 	}
 }
 
-func TestChooseLeaf(t *testing.T) {
-	for _, test := range chooseLeafTests {
+func TestChooseLeafNode(t *testing.T) {
+	for _, test := range chooseLeafNodeTests {
 		rt := Rtree{}
 		rt.root = &node{}
 
-		leaf0 := &node{rt.root, true, []entry{}}
+		leaf0 := &node{rt.root, true, []entry{}, 1}
 		entry0 := entry{test.bb0, leaf0, nil}
 
-		leaf1 := &node{rt.root, true, []entry{}}
+		leaf1 := &node{rt.root, true, []entry{}, 1}
 		entry1 := entry{test.bb1, leaf1, nil}
 
-		leaf2 := &node{rt.root, true, []entry{}}
+		leaf2 := &node{rt.root, true, []entry{}, 1}
 		entry2 := entry{test.bb2, leaf2, nil}
 
 		rt.root.entries = []entry{entry0, entry1, entry2}
 
 		obj := Point{0, 0, 0}.ToRect(0.5)
+		e := entry{obj, nil, obj}
 
 		expected := rt.root.entries[test.exp].child
-		if leaf := rt.chooseLeaf(rt.root, obj); leaf != expected {
+		if leaf := rt.chooseNode(rt.root, e, 1); leaf != expected {
 			t.Errorf("%s: expected %d", test.desc, test.exp)
 		}
 	}
@@ -221,7 +228,7 @@ func TestAdjustTreeNoPreviousSplit(t *testing.T) {
 	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
 	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
 	entries := []entry{r00, r01, r10}
-	n := node{rt.root, false, entries}
+	n := node{rt.root, false, entries, 1}
 	rt.root.entries = []entry{entry{bb: Point{0, 0}.ToRect(0), child: &n}}
 
 	rt.adjustTree(&n, nil)
@@ -238,12 +245,12 @@ func TestAdjustTreeNoSplit(t *testing.T) {
 
 	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
 	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
-	left := node{rt.root, false, []entry{r00, r01}}
+	left := node{rt.root, false, []entry{r00, r01}, 1}
 	leftEntry := entry{bb: Point{0, 0}.ToRect(0), child: &left}
 
 	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
 	r11 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
-	right := node{rt.root, false, []entry{r10, r11}}
+	right := node{rt.root, false, []entry{r10, r11}, 1}
 
 	rt.root.entries = []entry{leftEntry}
 	retl, retr := rt.adjustTree(&left, &right)
@@ -271,12 +278,12 @@ func TestAdjustTreeSplitParent(t *testing.T) {
 
 	r00 := entry{bb: mustRect(Point{0, 0}, []float64{1, 1})}
 	r01 := entry{bb: mustRect(Point{0, 1}, []float64{1, 1})}
-	left := node{rt.root, false, []entry{r00, r01}}
+	left := node{rt.root, false, []entry{r00, r01}, 1}
 	leftEntry := entry{bb: Point{0, 0}.ToRect(0), child: &left}
 
 	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
 	r11 := entry{bb: mustRect(Point{1, 1}, []float64{1, 1})}
-	right := node{rt.root, false, []entry{r10, r11}}
+	right := node{rt.root, false, []entry{r10, r11}, 1}
 
 	rt.root.entries = []entry{leftEntry}
 	retl, retr := rt.adjustTree(&left, &right)
@@ -394,8 +401,8 @@ func TestInsertSplitSecondLevel(t *testing.T) {
 		t.Errorf("Insert failed to split the root")
 	}
 
-	// root level + split level + entries level + objs level
-	if rt.Depth() != 4 {
+	// split level + entries level + objs level
+	if rt.Depth() != 3 {
 		t.Errorf("Insert failed to adjust properly")
 	}
 
@@ -459,8 +466,60 @@ func TestCondenseTreeEliminate(t *testing.T) {
 	}
 	
 	// delete entry 2 from parent entries
-	printNode(rt.root, 0)
 	parent := rt.root.entries[0].child.entries[1].child
 	parent.entries = append(parent.entries[:2], parent.entries[3:]...)
-	printNode(rt.condenseTree(parent), 0)
+}
+
+func TestChooseNodeNonLeaf(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{0, 6}, []float64{1, 2}),
+		mustRect(Point{1, 6}, []float64{1, 2}),
+		mustRect(Point{0, 8}, []float64{1, 2}),
+		mustRect(Point{1, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+	
+	obj := mustRect(Point{0, 10}, []float64{1, 2})
+	e := entry{obj, nil, obj}
+	n := rt.chooseNode(rt.root, e, 2)
+	if n.level != 2 {
+		t.Errorf("chooseNode failed to stop at desired level")
+	}
+}
+
+func TestInsertNonLeaf(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{0, 6}, []float64{1, 2}),
+		mustRect(Point{1, 6}, []float64{1, 2}),
+		mustRect(Point{0, 8}, []float64{1, 2}),
+		mustRect(Point{1, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	obj := mustRect(Point{99, 99}, []float64{99, 99})
+	e := entry{obj, nil, obj}
+	rt.insert(e, 2)
+
+	expected := rt.root.entries[1].child
+	if expected.entries[1].obj != obj {
+		t.Errorf("insert failed to insert entry at correct level")
+	}
 }
