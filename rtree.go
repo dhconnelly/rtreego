@@ -87,8 +87,9 @@ type Spatial interface {
 // Implemented per Section 3.2 of "R-trees: A Dynamic Index Structure for
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
 func (tree *Rtree) Insert(obj Spatial) error {
-	leaf := tree.chooseLeaf(tree.root, obj)
-	leaf.entries = append(leaf.entries, entry{obj.Bounds(), nil, obj})
+	e := entry{obj.Bounds(), nil, obj}
+	leaf := tree.chooseNode(tree.root, e, 1)
+	leaf.entries = append(leaf.entries, e)
 	var split *node
 	if len(leaf.entries) > tree.MaxChildren {
 		leaf, split = leaf.split(tree.MinChildren)
@@ -112,25 +113,25 @@ func (tree *Rtree) Insert(obj Spatial) error {
 	return nil
 }
 
-// chooseLeaf finds the leaf node in which obj should be inserted.
-func (tree *Rtree) chooseLeaf(n *node, obj Spatial) *node {
-	if n.leaf {
+// chooseNode finds the node at the specified level to which e should be added.
+func (tree *Rtree) chooseNode(n *node, e entry, level int) *node {
+	if n.leaf || n.level == level {
 		return n
 	}
 
 	// find the entry whose bb needs least enlargement to include obj
 	diff := math.MaxFloat64
 	var chosen entry
-	for _, e := range n.entries {
-		bb := boundingBox(e.bb, obj.Bounds())
-		d := bb.size() - e.bb.size()
-		if d < diff || (d == diff && e.bb.size() < chosen.bb.size()) {
+	for _, en := range n.entries {
+		bb := boundingBox(en.bb, e.obj.Bounds())
+		d := bb.size() - en.bb.size()
+		if d < diff || (d == diff && en.bb.size() < chosen.bb.size()) {
 			diff = d
-			chosen = e
+			chosen = en
 		}
 	}
 
-	return tree.chooseLeaf(chosen.child, obj)
+	return tree.chooseNode(chosen.child, e, level)
 }
 
 // adjustTree splits overflowing nodes and propagates the changes upwards.

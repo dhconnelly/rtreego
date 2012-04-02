@@ -39,7 +39,7 @@ func printEntry(e entry, level int) {
 	fmt.Println()
 }
 
-var chooseLeafTests = []struct {
+var chooseNodeTests = []struct {
 	bb0, bb1, bb2 *Rect // leaf bounding boxes
 	exp           int   // expected chosen leaf
 	desc          string
@@ -67,16 +67,17 @@ var chooseLeafTests = []struct {
 	},
 }
 
-func TestChooseLeafEmpty(t *testing.T) {
+func TestChooseNodeEmpty(t *testing.T) {
 	rt := NewTree(3, 5, 10)
 	obj := Point{0, 0, 0}.ToRect(0.5)
-	if leaf := rt.chooseLeaf(rt.root, obj); leaf != rt.root {
+	e := entry{obj, nil, obj}
+	if leaf := rt.chooseNode(rt.root, e, 1); leaf != rt.root {
 		t.Errorf("expected chooseLeaf of empty tree to return root")
 	}
 }
 
-func TestChooseLeaf(t *testing.T) {
-	for _, test := range chooseLeafTests {
+func TestChooseNode(t *testing.T) {
+	for _, test := range chooseNodeTests {
 		rt := Rtree{}
 		rt.root = &node{}
 
@@ -92,9 +93,10 @@ func TestChooseLeaf(t *testing.T) {
 		rt.root.entries = []entry{entry0, entry1, entry2}
 
 		obj := Point{0, 0, 0}.ToRect(0.5)
+		e := entry{obj, nil, obj}
 
 		expected := rt.root.entries[test.exp].child
-		if leaf := rt.chooseLeaf(rt.root, obj); leaf != expected {
+		if leaf := rt.chooseNode(rt.root, e, 1); leaf != expected {
 			t.Errorf("%s: expected %d", test.desc, test.exp)
 		}
 	}
