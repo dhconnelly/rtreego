@@ -22,6 +22,7 @@ func printNode(n *node, level int) {
 	padding := strings.Repeat("\t", level)
 	fmt.Printf("%sNode: %p\n", padding, n)
 	fmt.Printf("%sParent: %p\n", padding, n.parent)
+	fmt.Printf("%sLevel: %d\n", padding, n.level)
 	fmt.Printf("%sLeaf: %t\n%sEntries:\n", padding, n.leaf, padding)
 	for _, e := range n.entries {
 		printEntry(e, level+1)
@@ -39,10 +40,11 @@ func printEntry(e entry, level int) {
 	fmt.Println()
 }
 
-var chooseNodeTests = []struct {
+var chooseLeafNodeTests = []struct {
 	bb0, bb1, bb2 *Rect // leaf bounding boxes
 	exp           int   // expected chosen leaf
 	desc          string
+	level int
 }{
 	{
 		mustRect(Point{1, 1, 1}, []float64{1, 1, 1}),
@@ -50,6 +52,7 @@ var chooseNodeTests = []struct {
 		mustRect(Point{3, 4, -5}, []float64{2, 0.9, 8}),
 		1,
 		"clear winner",
+		1,
 	},
 	{
 		mustRect(Point{-1, -1.5, -1}, []float64{0.5, 2.5025, 0.5}),
@@ -57,6 +60,7 @@ var chooseNodeTests = []struct {
 		mustRect(Point{3, 4, -5}, []float64{2, 0.9, 8}),
 		1,
 		"leaves tie",
+		1,
 	},
 	{
 		mustRect(Point{-1, -1.5, -1}, []float64{0.5, 2.5025, 0.5}),
@@ -64,10 +68,11 @@ var chooseNodeTests = []struct {
 		mustRect(Point{-1, -2, -3}, []float64{2, 4, 6}),
 		2,
 		"leaf contains obj",
+		1,
 	},
 }
 
-func TestChooseNodeEmpty(t *testing.T) {
+func TestChooseLeafNodeEmpty(t *testing.T) {
 	rt := NewTree(3, 5, 10)
 	obj := Point{0, 0, 0}.ToRect(0.5)
 	e := entry{obj, nil, obj}
@@ -76,8 +81,8 @@ func TestChooseNodeEmpty(t *testing.T) {
 	}
 }
 
-func TestChooseNode(t *testing.T) {
-	for _, test := range chooseNodeTests {
+func TestChooseLeafNode(t *testing.T) {
+	for _, test := range chooseLeafNodeTests {
 		rt := Rtree{}
 		rt.root = &node{}
 
@@ -439,5 +444,31 @@ func TestFindLeaf(t *testing.T) {
 	expected := rt.root.entries[0].child.entries[1].child
 	if leaf != expected {
 		t.Errorf("Failed to locate leaf containing %v", obj)
+	}
+}
+
+func TestChooseNodeNonLeaf(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{0, 6}, []float64{1, 2}),
+		mustRect(Point{1, 6}, []float64{1, 2}),
+		mustRect(Point{0, 8}, []float64{1, 2}),
+		mustRect(Point{1, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	obj := mustRect(Point{0, 10}, []float64{1, 2})
+	e := entry{obj, nil, obj}
+	n := rt.chooseNode(rt.root, e, 2)
+	if n.level != 2 {
+		t.Errorf("chooseNode failed to stop at desired level")
 	}
 }
