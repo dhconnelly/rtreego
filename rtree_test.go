@@ -468,6 +468,18 @@ func TestCondenseTreeEliminate(t *testing.T) {
 	// delete entry 2 from parent entries
 	parent := rt.root.entries[0].child.entries[1].child
 	parent.entries = append(parent.entries[:2], parent.entries[3:]...)
+	rt.condenseTree(parent)
+
+	retrieved := []Spatial{}
+	for obj := range items(rt.root) {
+		retrieved = append(retrieved, obj)
+	}
+	
+	if len(retrieved) != len(things)-1 {
+		t.Errorf("condenseTree failed to reinsert upstream elements")
+	}
+
+	// TODO verify levels
 }
 
 func TestChooseNodeNonLeaf(t *testing.T) {

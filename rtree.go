@@ -89,6 +89,7 @@ type Spatial interface {
 func (tree *Rtree) Insert(obj Spatial) {
 	e := entry{obj.Bounds(), nil, obj}
 	tree.insert(e, 1)
+	tree.size++
 }
 
 // insert adds the specified entry to the tree at the specified level.
@@ -114,7 +115,6 @@ func (tree *Rtree) insert(e entry, level int) {
 		oldRoot.parent = tree.root
 		splitRoot.parent = tree.root
 	}
-	tree.size++
 }
 
 // chooseNode finds the node at the specified level to which e should be added.
@@ -127,7 +127,7 @@ func (tree *Rtree) chooseNode(n *node, e entry, level int) *node {
 	diff := math.MaxFloat64
 	var chosen entry
 	for _, en := range n.entries {
-		bb := boundingBox(en.bb, e.obj.Bounds())
+		bb := boundingBox(en.bb, e.bb)
 		d := bb.size() - en.bb.size()
 		if d < diff || (d == diff && en.bb.size() < chosen.bb.size()) {
 			diff = d
@@ -375,11 +375,10 @@ func (tree *Rtree) condenseTree(n *node) *node {
 		n = n.parent
 	}
 
-	// TODO higher-level nodes must be higher in the tree?
 	for _, n := range deleted {
-		for obj := range items(n) {
-			tree.Insert(obj)
-		}
+		// reinsert entry so that it will remain at the same level as before
+		e := entry{n.computeBoundingBox(), n, nil}
+		tree.insert(e, n.level+1)
 	}
 	
 	return n
