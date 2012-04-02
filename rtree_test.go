@@ -72,6 +72,16 @@ func verify(t *testing.T, n *node) {
 	}
 }
 
+func indexOf(objs []Spatial, obj Spatial) int {
+	ind := -1
+	for i, r := range objs {
+		if r == obj {
+			ind = i
+			break
+		}
+	}
+	return ind
+}
 
 var chooseLeafNodeTests = []struct {
 	bb0, bb1, bb2 *Rect // leaf bounding boxes
@@ -620,5 +630,62 @@ func TestDelete(t *testing.T) {
 			t.Errorf("Delte failed to remove %v", thing)
 		}
 		verify(t, rt.root)
+	}
+}
+
+func TestSearchIntersect(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{2, 6}, []float64{1, 2}),
+		mustRect(Point{3, 6}, []float64{1, 2}),
+		mustRect(Point{2, 8}, []float64{1, 2}),
+		mustRect(Point{3, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	bb := mustRect(Point{2, 1.5}, []float64{10, 5.5})
+	q := rt.SearchIntersect(bb)
+
+	expected := []int{1, 2, 3, 4, 6, 7}
+	if len(q) != len(expected) {
+		t.Errorf("SearchIntersect failed to find all objects")
+	}
+	for _, ind := range expected {
+		if indexOf(q, things[ind]) < 0 {
+			t.Errorf("SearchIntersect failed to find things[%d]", ind)
+		}
+	}
+}
+
+func TestSearchIntersectNoResults(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{2, 6}, []float64{1, 2}),
+		mustRect(Point{3, 6}, []float64{1, 2}),
+		mustRect(Point{2, 8}, []float64{1, 2}),
+		mustRect(Point{3, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	bb := mustRect(Point{99, 99}, []float64{10, 5.5})
+	q := rt.SearchIntersect(bb)
+	if len(q) != 0 {
+		t.Errorf("SearchIntersect failed to return nil slice on failing query")
 	}
 }

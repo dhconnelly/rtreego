@@ -403,3 +403,27 @@ func (tree *Rtree) condenseTree(n *node) {
 		tree.insert(e, n.level+1)
 	}
 }
+
+// Searching
+
+// SearchIntersectBB returns all objects that intersect the specified rectangle.
+//
+// Implemented per Section 3.1 of "R-trees: A Dynamic Index Structure for
+// Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
+func (tree *Rtree) SearchIntersect(bb *Rect) []Spatial {
+	return tree.searchIntersect(tree.root, bb)
+}
+
+func (tree *Rtree) searchIntersect(n *node, bb *Rect) []Spatial {
+	results := []Spatial{}
+	for _, e := range n.entries {
+		if intersect(e.bb, bb) != nil {
+			if n.leaf {
+				results = append(results, e.obj)
+			} else {
+				results = append(results, tree.searchIntersect(e.child, bb)...)
+			}
+		}
+	}
+	return results
+}
