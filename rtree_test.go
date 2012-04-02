@@ -40,6 +40,22 @@ func printEntry(e entry, level int) {
 	fmt.Println()
 }
 
+func verify(t *testing.T, n *node) {
+	if n.leaf {
+		return
+	}
+	for _, e := range n.entries {
+		if e.child.level != n.level - 1 {
+			t.Errorf("failed to preserve level order")
+		}
+		if e.child.parent != n {
+			t.Errorf("failed to update parent pointer")
+		}
+		verify(t, e.child)
+	}
+}
+
+
 var chooseLeafNodeTests = []struct {
 	bb0, bb1, bb2 *Rect // leaf bounding boxes
 	exp           int   // expected chosen leaf
@@ -447,6 +463,31 @@ func TestFindLeaf(t *testing.T) {
 	}
 }
 
+func TestFindLeafDoesNotExist(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{0, 6}, []float64{1, 2}),
+		mustRect(Point{1, 6}, []float64{1, 2}),
+		mustRect(Point{0, 8}, []float64{1, 2}),
+		mustRect(Point{1, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	obj := mustRect(Point{99, 99}, []float64{99, 99})
+	leaf := rt.findLeaf(rt.root, obj)
+	if leaf != nil {
+		t.Errorf("findLeaf failed to return nil for non-existent object")
+	}
+}
+
 func TestCondenseTreeEliminate(t *testing.T) {
 	rt := NewTree(2, 3, 3)
 	things := []*Rect{
@@ -479,19 +520,7 @@ func TestCondenseTreeEliminate(t *testing.T) {
 		t.Errorf("condenseTree failed to reinsert upstream elements")
 	}
 
-	var verify func(n *node)
-	verify = func(n *node) {
-		if n.leaf {
-			return
-		}
-		for _, e := range n.entries {
-			if e.child.level != n.level - 1 {
-				t.Errorf("condenseTree failed to preserve level order")
-			}
-			verify(e.child)
-		}
-	}
-	verify(rt.root)
+	verify(t, rt.root)
 }
 
 func TestChooseNodeNonLeaf(t *testing.T) {
@@ -545,5 +574,34 @@ func TestInsertNonLeaf(t *testing.T) {
 	expected := rt.root.entries[1].child
 	if expected.entries[1].obj != obj {
 		t.Errorf("insert failed to insert entry at correct level")
+	}
+}
+
+func TestDelete(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{0, 6}, []float64{1, 2}),
+		mustRect(Point{1, 6}, []float64{1, 2}),
+		mustRect(Point{0, 8}, []float64{1, 2}),
+		mustRect(Point{1, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	verify(t, rt.root)
+
+	for i, thing := range things {
+		ok := rt.Delete(thing)
+		if !ok || rt.Size() != len(things) - i - 1 {
+			t.Errorf("Delte failed to remove %v", thing)
+		}
+		verify(t, rt.root)
 	}
 }

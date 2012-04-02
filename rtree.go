@@ -96,6 +96,13 @@ func (tree *Rtree) Insert(obj Spatial) {
 func (tree *Rtree) insert(e entry, level int) {
 	leaf := tree.chooseNode(tree.root, e, level)
 	leaf.entries = append(leaf.entries, e)
+
+	// update parent pointer if necessary
+	if e.child != nil {
+		e.child.parent = leaf
+	}
+
+	// split leaf if overflows
 	var split *node
 	if len(leaf.entries) > tree.MaxChildren {
 		leaf, split = leaf.split(tree.MinChildren)
@@ -319,8 +326,32 @@ func pickNext(left, right *node, entries []entry) (next int) {
 //
 // Implemented per Section 3.3 of "R-trees: A Dynamic Index Structure for
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
-func (tree *Rtree) Delete(obj Spatial) (ok bool, err error) {
-	return false, nil
+func (tree *Rtree) Delete(obj Spatial) bool {
+	n := tree.findLeaf(tree.root, obj)
+	if n == nil {
+		return false
+	}
+
+	ind := -1
+	for i, e := range n.entries {
+		if e.obj == obj {
+			ind = i
+		}
+	}
+	if ind < 0 {
+		return false
+	}
+
+	n.entries = append(n.entries[:ind], n.entries[ind+1:]...)
+	
+	tree.condenseTree(n)
+	tree.size--
+
+	if len(tree.root.entries) == 1 {
+		tree.root = tree.root.entries[0].child
+	}
+
+	return true
 }
 
 // findLeaf finds the leaf node containing obj.
@@ -328,6 +359,7 @@ func (tree *Rtree) findLeaf(n *node, obj Spatial) *node {
 	if n.leaf {
 		return n
 	}
+	// if not leaf, find the correct subtree
 	for _, e := range n.entries {
 		if e.bb.containsRect(obj.Bounds()) {
 			return tree.findLeaf(e.child, obj)
@@ -360,14 +392,21 @@ func (tree *Rtree) condenseTree(n *node) {
 	for n != tree.root {
 		if len(n.entries) < tree.MinChildren {
 			// remove n from parent entries
-			deleted = append(deleted, n)
 			entries := []entry{}
 			for _, e := range n.parent.entries {
 				if e.child != n {
 					entries = append(entries, e)
 				}
 			}
+			if len(n.parent.entries) == len(entries) {
+				panic(fmt.Errorf("Failed to remove entry from parent"))
+			}
 			n.parent.entries = entries
+
+			// only add n to deleted if it still has children
+			if len(n.entries) > 0 {
+				deleted = append(deleted, n)
+			}
 		} else {
 			// just a child entry deletion, no underflow
 			n.getEntry().bb = n.computeBoundingBox()
