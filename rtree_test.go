@@ -479,7 +479,19 @@ func TestCondenseTreeEliminate(t *testing.T) {
 		t.Errorf("condenseTree failed to reinsert upstream elements")
 	}
 
-	// TODO verify levels
+	var verify func(n *node)
+	verify = func(n *node) {
+		if n.leaf {
+			return
+		}
+		for _, e := range n.entries {
+			if e.child.level != n.level - 1 {
+				t.Errorf("condenseTree failed to preserve level order")
+			}
+			verify(e.child)
+		}
+	}
+	verify(rt.root)
 }
 
 func TestChooseNodeNonLeaf(t *testing.T) {

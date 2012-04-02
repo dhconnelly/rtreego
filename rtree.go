@@ -354,7 +354,7 @@ func items(n *node) chan Spatial {
 }
 
 // condenseTree deletes underflowing nodes and propagates the changes upwards.
-func (tree *Rtree) condenseTree(n *node) *node {
+func (tree *Rtree) condenseTree(n *node) {
 	deleted := []*node{}
 
 	for n != tree.root {
@@ -380,6 +380,4 @@ func (tree *Rtree) condenseTree(n *node) *node {
 		e := entry{n.computeBoundingBox(), n, nil}
 		tree.insert(e, n.level+1)
 	}
-	
-	return n
 }
