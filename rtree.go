@@ -368,23 +368,6 @@ func (tree *Rtree) findLeaf(n *node, obj Spatial) *node {
 	return nil
 }
 
-func items(n *node) chan Spatial {
-	ch := make(chan Spatial)
-	go func() {
-		for _, e := range n.entries {
-			if n.leaf {
-				ch <- e.obj
-			} else {
-				for obj := range items(e.child) {
-					ch <- obj
-				}
-			}
-		}
-		close(ch)
-	}()
-	return ch
-}
-
 // condenseTree deletes underflowing nodes and propagates the changes upwards.
 func (tree *Rtree) condenseTree(n *node) {
 	deleted := []*node{}

@@ -40,6 +40,23 @@ func printEntry(e entry, level int) {
 	fmt.Println()
 }
 
+func items(n *node) chan Spatial {
+	ch := make(chan Spatial)
+	go func() {
+		for _, e := range n.entries {
+			if n.leaf {
+				ch <- e.obj
+			} else {
+				for obj := range items(e.child) {
+					ch <- obj
+				}
+			}
+		}
+		close(ch)
+	}()
+	return ch
+}
+
 func verify(t *testing.T, n *node) {
 	if n.leaf {
 		return
