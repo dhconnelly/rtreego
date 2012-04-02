@@ -472,3 +472,31 @@ func TestChooseNodeNonLeaf(t *testing.T) {
 		t.Errorf("chooseNode failed to stop at desired level")
 	}
 }
+
+func TestInsertNonLeaf(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{0, 6}, []float64{1, 2}),
+		mustRect(Point{1, 6}, []float64{1, 2}),
+		mustRect(Point{0, 8}, []float64{1, 2}),
+		mustRect(Point{1, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	obj := mustRect(Point{99, 99}, []float64{99, 99})
+	e := entry{obj, nil, obj}
+	rt.insert(e, 2)
+
+	expected := rt.root.entries[1].child
+	if expected.entries[1].obj != obj {
+		t.Errorf("insert failed to insert entry at correct level")
+	}
+}

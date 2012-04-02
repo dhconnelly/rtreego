@@ -86,9 +86,14 @@ type Spatial interface {
 //
 // Implemented per Section 3.2 of "R-trees: A Dynamic Index Structure for
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
-func (tree *Rtree) Insert(obj Spatial) error {
+func (tree *Rtree) Insert(obj Spatial) {
 	e := entry{obj.Bounds(), nil, obj}
-	leaf := tree.chooseNode(tree.root, e, 1)
+	tree.insert(e, 1)
+}
+
+// insert adds the specified entry to the tree at the specified level.
+func (tree *Rtree) insert(e entry, level int) {
+	leaf := tree.chooseNode(tree.root, e, level)
 	leaf.entries = append(leaf.entries, e)
 	var split *node
 	if len(leaf.entries) > tree.MaxChildren {
@@ -110,7 +115,6 @@ func (tree *Rtree) Insert(obj Spatial) error {
 		splitRoot.parent = tree.root
 	}
 	tree.size++
-	return nil
 }
 
 // chooseNode finds the node at the specified level to which e should be added.
