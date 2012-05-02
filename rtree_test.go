@@ -618,6 +618,21 @@ func TestInsertNonLeaf(t *testing.T) {
 	}
 }
 
+func TestDeleteFlatten(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	// make sure flattening didn't nuke the tree
+	rt.Delete(things[0])
+	verify(t, rt.root)
+}
+
 func TestDelete(t *testing.T) {
 	rt := NewTree(2, 3, 3)
 	things := []*Rect{

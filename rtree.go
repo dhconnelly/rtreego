@@ -347,7 +347,7 @@ func (tree *Rtree) Delete(obj Spatial) bool {
 	tree.condenseTree(n)
 	tree.size--
 
-	if len(tree.root.entries) == 1 {
+	if !tree.root.leaf && len(tree.root.entries) == 1 {
 		tree.root = tree.root.entries[0].child
 	}
 
