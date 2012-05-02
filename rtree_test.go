@@ -345,6 +345,14 @@ func TestAdjustTreeSplitParent(t *testing.T) {
 	}
 }
 
+func TestInsertRepeated(t *testing.T) {
+	rt := NewTree(2, 3, 5)
+	thing := mustRect(Point{0, 0}, []float64{2, 1})
+	for i := 0; i < 6; i++ {
+		rt.Insert(thing)
+	}
+}
+
 func TestInsertNoSplit(t *testing.T) {
 	rt := NewTree(2, 3, 3)
 	thing := mustRect(Point{0, 0}, []float64{2, 1})

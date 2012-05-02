@@ -287,7 +287,8 @@ func assignGroup(e entry, left, right *node) {
 }
 
 // pickSeeds chooses two child entries of n to start a split.
-func (n *node) pickSeeds() (left, right int) {
+func (n *node) pickSeeds() (int, int) {
+	left, right := 0, 1
 	maxWastedSpace := -1.0
 	for i, e1 := range n.entries {
 		for j, e2 := range n.entries[i+1:] {
@@ -298,7 +299,7 @@ func (n *node) pickSeeds() (left, right int) {
 			}
 		}
 	}
-	return
+	return left, right
 }
 
 // pickNext chooses an entry to be added to an entry group.
