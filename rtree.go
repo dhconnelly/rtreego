@@ -359,10 +359,19 @@ func (tree *Rtree) findLeaf(n *node, obj Spatial) *node {
 	if n.leaf {
 		return n
 	}
-	// if not leaf, find the correct subtree
+	// if not leaf, search all candidate subtrees
 	for _, e := range n.entries {
 		if e.bb.containsRect(obj.Bounds()) {
-			return tree.findLeaf(e.child, obj)
+			leaf := tree.findLeaf(e.child, obj)
+			if leaf == nil {
+				continue
+			}
+			// check if the leaf actually contains the object
+			for _, leafEntry := range leaf.entries {
+				if leafEntry.obj == obj {
+					return leaf
+				}
+			}
 		}
 	}
 	return nil

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"math/rand"
 )
 
 func (r *Rect) Bounds() *Rect {
@@ -481,12 +482,25 @@ func TestFindLeaf(t *testing.T) {
 	for _, thing := range things {
 		rt.Insert(thing)
 	}
-
-	obj := mustRect(Point{1.5, 7}, []float64{0.5, 0.5})
-	leaf := rt.findLeaf(rt.root, obj)
-	expected := rt.root.entries[0].child.entries[1].child
-	if leaf != expected {
-		t.Errorf("Failed to locate leaf containing %v", obj)
+	verify(t, rt.root)
+	for _, thing := range things {
+		leaf := rt.findLeaf(rt.root, thing)
+		if leaf == nil {
+			printNode(rt.root, 0)
+			t.Errorf("Unable to find leaf containing an entry after insertion!")
+		}
+		var found *Rect
+		for _, other := range leaf.entries {
+			if other.obj == thing {
+				found = other.obj.(*Rect)
+				break
+			}
+		}
+		if found == nil {
+			printNode(rt.root, 0)
+			printNode(leaf, 0)
+			t.Errorf("Entry %v not found in leaf node %v!", thing, leaf)
+		}
 	}
 }
 
@@ -624,10 +638,23 @@ func TestDelete(t *testing.T) {
 
 	verify(t, rt.root)
 
-	for i, thing := range things {
+	things2 := []*Rect{}
+	for len(things) > 0 {
+		i := rand.Int() % len(things)
+		things2 = append(things2, things[i])
+		things = append(things[:i], things[i+1:]...)
+	}
+	
+	for i, thing := range things2 {
 		ok := rt.Delete(thing)
-		if !ok || rt.Size() != len(things) - i - 1 {
-			t.Errorf("Delte failed to remove %v", thing)
+		if !ok {
+			t.Errorf("Thing %v was not found in tree during deletion", thing)
+			return
+		}
+		
+		if rt.Size() != len(things2) - i - 1 {
+			t.Errorf("Delete failed to remove %v", thing)
+			return
 		}
 		verify(t, rt.root)
 	}
