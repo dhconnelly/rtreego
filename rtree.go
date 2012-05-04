@@ -517,3 +517,51 @@ func (tree *Rtree) nearestNeighbor(p Point, n *node, d float64, nearest Spatial)
 	
 	return nearest, d
 }
+
+func (tree *Rtree) NearestNeighbors(k int, p Point) []Spatial {
+	dists := make([]float64, k)
+	objs := make([]Spatial, k)
+	for i := 0; i < k; i++ {
+		dists[i] = math.MaxFloat64
+		objs[i] = nil
+	}
+	objs, _ = tree.nearestNeighbors(k, p, tree.root, dists, objs)
+	return objs
+}
+
+// insert obj into nearest and return the first k elements in increasing order.
+func insertNearest(k int, dists []float64, nearest []Spatial, dist float64, obj Spatial) ([]float64, []Spatial) {
+	i := 0
+	for i < k && dist >= dists[i] {
+		i++
+	}
+	if i >= k {
+		return dists, nearest
+	}
+	
+	left, right := dists[:i], dists[i:k-1]
+	updatedDists := make([]float64, k)
+	copy(updatedDists, left)
+	updatedDists[i] = dist
+	copy(updatedDists[i+1:], right)
+
+	leftObjs, rightObjs := nearest[:i], nearest[i:k-1]
+	updatedNearest := make([]Spatial, k)
+	copy(updatedNearest, leftObjs)
+	updatedNearest[i] = obj
+	copy(updatedNearest[i+1:], rightObjs)
+	
+	return updatedDists, updatedNearest
+}
+
+func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, nearest []Spatial) ([]Spatial, []float64) {
+	if n.leaf {
+		for _, e := range n.entries {
+			dist := math.Sqrt(p.minDist(e.bb))
+			dists, nearest = insertNearest(k, dists, nearest, dist, e.obj)
+		}
+		return nearest, dists
+	}
+	
+	return nil, nil
+}

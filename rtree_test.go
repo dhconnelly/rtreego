@@ -760,7 +760,7 @@ func TestSortEntries(t *testing.T) {
 	}
 }
 
-func TestNearestNeighborExact(t *testing.T) {
+func TestNearestNeighbor(t *testing.T) {
 	rt := NewTree(2, 3, 3)
 	things := []*Rect{
 		mustRect(Point{1, 1}, []float64{1, 1}),
@@ -781,5 +781,25 @@ func TestNearestNeighborExact(t *testing.T) {
 	
 	if obj1 != things[0] || obj2 != things[1] || obj3 != things[2] || obj4 != things[2] {
 		t.Errorf("NearestNeighbor failed")
+	}
+}
+
+func TestNearestNeighbors(t *testing.T) {
+	rt := NewTree(2, 3, 10)
+	things := []*Rect{
+		mustRect(Point{1, 1}, []float64{1, 1}),
+		mustRect(Point{-7, -7}, []float64{1, 1}),
+		mustRect(Point{1, 3}, []float64{1, 1}),
+		mustRect(Point{7, 7}, []float64{1, 1}),
+		mustRect(Point{10, 2}, []float64{1, 1}),
+		mustRect(Point{3, 3}, []float64{1, 1}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+	
+	objs := rt.NearestNeighbors(3, Point{0.5, 0.5})
+	if objs[0] != things[0] || objs[1] != things[2] || objs[2] != things[5] {
+		t.Errorf("NearestNeighbors failed")
 	}
 }
