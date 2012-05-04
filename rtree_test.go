@@ -760,7 +760,7 @@ func TestSortEntries(t *testing.T) {
 	}
 }
 
-func TestNearestNeighbor(t *testing.T) {
+func TestNearestNeighborExact(t *testing.T) {
 	rt := NewTree(2, 3, 3)
 	things := []*Rect{
 		mustRect(Point{1, 1}, []float64{1, 1}),
@@ -777,8 +777,9 @@ func TestNearestNeighbor(t *testing.T) {
 	obj1 := rt.NearestNeighbor(Point{0.5, 0.5})
 	obj2 := rt.NearestNeighbor(Point{1.5, 4.5})
 	obj3 := rt.NearestNeighbor(Point{5, 2.5})
+	obj4 := rt.NearestNeighbor(Point{3.5, 2.5})
 	
-	if obj1 != things[0] || obj2 != things[1] || obj3 != things[2] {
+	if obj1 != things[0] || obj2 != things[1] || obj3 != things[2] || obj4 != things[2] {
 		t.Errorf("NearestNeighbor failed")
 	}
 }
