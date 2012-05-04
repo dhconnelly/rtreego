@@ -8,6 +8,7 @@ package rtreego
 import (
 	"fmt"
 	"math"
+	"sort"
 )
 
 // Rtree represents an R-tree, a balanced search tree for storing and querying
@@ -436,4 +437,64 @@ func (tree *Rtree) searchIntersect(n *node, bb *Rect) []Spatial {
 		}
 	}
 	return results
+}
+
+// NearestNeighbor returns the closest object to the specified point.
+// Implemented per "Nearest Neighbor Queries" by Roussopoulos et al
+func (tree *Rtree) NearestNeighbor(p Point) Spatial {
+	obj, _ := tree.nearestNeighbor(p, tree.root, math.MaxFloat64, nil)
+	return obj
+}
+
+// utilities for sorting slices of entries
+
+type entrySlice struct {
+	entries []entry
+	dists []float64
+	pt Point
+}
+
+func (s entrySlice) Len() int { return len(s.entries) }
+
+func (s entrySlice) Swap(i, j int) {
+	s.entries[i], s.entries[j] = s.entries[j], s.entries[i]
+	s.dists[i], s.dists[j] = s.dists[j], s.dists[i]
+}
+
+func (s entrySlice) Less(i, j int) bool {
+	return s.dists[i] < s.dists[j]
+}
+
+func sortEntries(p Point, entries []entry) ([]entry, []float64) {
+	sorted := make([]entry, len(entries))
+	dists := make([]float64, len(entries))
+	for i := 0; i < len(entries); i++ {
+		sorted[i] = entries[i]
+		dists[i] = p.minDist(entries[i].bb)
+	}
+	sort.Sort(entrySlice{sorted, dists, p})
+	return sorted, dists
+}
+
+func (tree *Rtree) nearestNeighbor(p Point, n *node, d float64, nearest Spatial) (Spatial, float64) {
+	if n.leaf {
+		for _, e := range n.entries {
+			dist := math.Sqrt(p.minDist(e.bb))
+			if dist < d {
+				d = dist
+				nearest = e.obj
+			}
+		}
+	} else {
+		branches, _ := sortEntries(p, n.entries)
+		for _, e := range branches {
+			subNearest, dist := tree.nearestNeighbor(p, e.child, d, nearest)
+			if dist < d {
+				d = dist
+				nearest = subNearest
+			}
+		}
+	}
+	
+	return nearest, d
 }

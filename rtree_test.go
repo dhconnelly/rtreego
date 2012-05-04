@@ -739,3 +739,46 @@ func TestSearchIntersectNoResults(t *testing.T) {
 		t.Errorf("SearchIntersect failed to return nil slice on failing query")
 	}
 }
+
+func TestSortEntries(t *testing.T) {
+	objs := []*Rect{
+		mustRect(Point{1, 1}, []float64{1, 1}),
+		mustRect(Point{2, 2}, []float64{1, 1}),
+		mustRect(Point{3, 3}, []float64{1, 1}),
+	}
+	entries := []entry{
+		entry{objs[2], nil, objs[2]},
+		entry{objs[1], nil, objs[1]},
+		entry{objs[0], nil, objs[0]},
+	}
+	sorted, dists := sortEntries(Point{0, 0}, entries)
+	if sorted[0] != entries[2] || sorted[1] != entries[1] || sorted[2] != entries[0] {
+		t.Errorf("sortEntries failed")
+	}
+	if dists[0] != 2 || dists[1] != 8 || dists[2] != 18 {
+		t.Errorf("sortEntries failed to calculate proper distances")
+	}
+}
+
+func TestNearestNeighbor(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{1, 1}, []float64{1, 1}),
+		mustRect(Point{1, 3}, []float64{1, 1}),
+		mustRect(Point{3, 2}, []float64{1, 1}),
+		mustRect(Point{-7, -7}, []float64{1, 1}),
+		mustRect(Point{7, 7}, []float64{1, 1}),
+		mustRect(Point{10, 2}, []float64{1, 1}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+	
+	obj1 := rt.NearestNeighbor(Point{0.5, 0.5})
+	obj2 := rt.NearestNeighbor(Point{1.5, 4.5})
+	obj3 := rt.NearestNeighbor(Point{5, 2.5})
+	
+	if obj1 != things[0] || obj2 != things[1] || obj3 != things[2] {
+		t.Errorf("NearestNeighbor failed")
+	}
+}
