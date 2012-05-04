@@ -560,8 +560,12 @@ func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, ne
 			dist := math.Sqrt(p.minDist(e.bb))
 			dists, nearest = insertNearest(k, dists, nearest, dist, e.obj)
 		}
-		return nearest, dists
+	} else {
+		branches, branchDists := sortEntries(p, n.entries)
+		branches = pruneEntries(p, branches, branchDists)
+		for _, e := range branches {
+			nearest, dists = tree.nearestNeighbors(k, p, e.child, dists, nearest)
+		}
 	}
-	
-	return nil, nil
+	return nearest, dists
 }

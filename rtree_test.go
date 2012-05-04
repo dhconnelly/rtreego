@@ -785,7 +785,7 @@ func TestNearestNeighbor(t *testing.T) {
 }
 
 func TestNearestNeighbors(t *testing.T) {
-	rt := NewTree(2, 3, 10)
+	rt := NewTree(2, 3, 3)
 	things := []*Rect{
 		mustRect(Point{1, 1}, []float64{1, 1}),
 		mustRect(Point{-7, -7}, []float64{1, 1}),
