@@ -25,9 +25,12 @@ details please refer to the references.
 Status
 ------
 
-Geometric primitives (points, rectangles, and their relevant geometric
-algorithms) are implemented and tested.  The R-tree data structure and
-algorithms are currently under development.
+The geometric primitives, basic algorithms (insertion, deletion), and
+queries (bounding-box, nearest-neighbor) are implemented and tested.
+
+This implementation handles the general N-dimensional case; for a more
+efficient implementation for the 3-dimensional case, see [Patrick
+Higgins' fork](https://github.com/patrick-higgins/rtreego).
 
 
 Install
