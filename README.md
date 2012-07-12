@@ -143,7 +143,7 @@ query point.
 
 ### More information
 
-See http://dhconnelly.github.com/rtreego for full API documentation.
+See http://gopkgdoc.appspot.com/pkg/github.com/dhconnelly/rtreego for full API documentation.
 
 
 References
