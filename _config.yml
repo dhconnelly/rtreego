@@ -1,0 +1,3 @@
+safe: true
+auto: true
+permalink: /:year/:month/:title.html
