@@ -9,7 +9,6 @@ rtreego
 A library for efficiently storing and querying spatial data
 in the Go programming language.
 
-
 About
 -----
 
@@ -26,28 +25,20 @@ performance is not guaranteed.  Instead, a number of rebalancing
 heuristics are applied that perform well in practice.  For more
 details please refer to the references.
 
-
-Status
-------
-
-The geometric primitives, basic algorithms (insertion, deletion), and
-queries (bounding-box, nearest-neighbor) are implemented and tested.
-
 This implementation handles the general N-dimensional case; for a more
 efficient implementation for the 3-dimensional case, see [Patrick
 Higgins' fork](https://github.com/patrick-higgins/rtreego).
 
+Getting Started
+---------------
 
-Install
--------
-
-With Go 1 installed, just run `go get github.com/dhconnelly/rtreego`.
-
-
-Usage
------
+Get the source code from [GitHub](https://github.com/dhconnelly/rtreego) or,
+with Go 1 installed, run `go get github.com/dhconnelly/rtreego`.
 
 Make sure you `import github.com/dhconnelly/rtreego` in your Go source files.
+
+Documentation
+-------------
 
 ### Storing, updating, and deleting objects
 
@@ -148,8 +139,8 @@ query point.
 
 ### More information
 
-See http://gopkgdoc.appspot.com/pkg/github.com/dhconnelly/rtreego for full API documentation.
-
+See [GoPkgDoc](http://gopkgdoc.appspot.com/pkg/github.com/dhconnelly/rtreego)
+for full API documentation.
 
 References
 ----------
@@ -167,15 +158,40 @@ References
   SIGMOD, pages 71-79, 1995.
   http://www.postgis.org/support/nearestneighbor.pdf
 
-
 Author
 ------
 
-rtreego is written and maintained by Daniel Connelly.  You can find my stuff
-at dhconnelly.com or email me at dhconnelly@gmail.com.
-
+Written by [Daniel Connelly](http://dhconnelly.com) (<dhconnelly@gmail.com>).
 
 License
 -------
 
-rtreego is released under a BSD-style license; see LICENSE for more details.
+rtreego is released under a BSD-style license, described here and in the
+`LICENSE` file:
+
+Copyright (c) 2012, Daniel Connelly. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of Daniel Connelly nor the names of its contributors may be
+   used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
