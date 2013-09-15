@@ -127,6 +127,31 @@ type Rect struct {
 	p, q Point // Enforced by NewRect: p[i] <= q[i] for all i.
 }
 
+// The coordinate of the point of the rectangle at i
+func (r *Rect) PointCoord(i int) float64 {
+  return r.p[i]
+}
+
+// The coordinate of the lengths of the rectangle at i
+func (r *Rect) LengthsCoord(i int) float64 {
+  return r.q[i] - r.p[i]
+}
+
+// Returns true if the two rectangles are equal
+func (r *Rect) Equal(other *Rect) bool {
+  for i, e := range r.p {
+    if e != other.p[i] {
+      return false
+    }
+  }
+  for i, e := range r.q {
+    if e != other.q[i] {
+      return false
+    }
+  }
+  return true
+}
+
 func (r *Rect) String() string {
 	s := make([]string, len(r.p))
 	for i, a := range r.p {
