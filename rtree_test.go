@@ -2,9 +2,9 @@ package rtreego
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"testing"
-	"math/rand"
 )
 
 func (r *Rect) Bounds() *Rect {
@@ -63,7 +63,7 @@ func verify(t *testing.T, n *node) {
 		return
 	}
 	for _, e := range n.entries {
-		if e.child.level != n.level - 1 {
+		if e.child.level != n.level-1 {
 			t.Errorf("failed to preserve level order")
 		}
 		if e.child.parent != n {
@@ -88,7 +88,7 @@ var chooseLeafNodeTests = []struct {
 	bb0, bb1, bb2 *Rect // leaf bounding boxes
 	exp           int   // expected chosen leaf
 	desc          string
-	level int
+	level         int
 }{
 	{
 		mustRect(Point{1, 1, 1}, []float64{1, 1, 1}),
@@ -554,7 +554,7 @@ func TestCondenseTreeEliminate(t *testing.T) {
 	for _, thing := range things {
 		rt.Insert(thing)
 	}
-	
+
 	// delete entry 2 from parent entries
 	parent := rt.root.entries[0].child.entries[1].child
 	parent.entries = append(parent.entries[:2], parent.entries[3:]...)
@@ -564,7 +564,7 @@ func TestCondenseTreeEliminate(t *testing.T) {
 	for obj := range items(rt.root) {
 		retrieved = append(retrieved, obj)
 	}
-	
+
 	if len(retrieved) != len(things)-1 {
 		t.Errorf("condenseTree failed to reinsert upstream elements")
 	}
@@ -589,7 +589,7 @@ func TestChooseNodeNonLeaf(t *testing.T) {
 	for _, thing := range things {
 		rt.Insert(thing)
 	}
-	
+
 	obj := mustRect(Point{0, 10}, []float64{1, 2})
 	e := entry{obj, nil, obj}
 	n := rt.chooseNode(rt.root, e, 2)
@@ -667,15 +667,15 @@ func TestDelete(t *testing.T) {
 		things2 = append(things2, things[i])
 		things = append(things[:i], things[i+1:]...)
 	}
-	
+
 	for i, thing := range things2 {
 		ok := rt.Delete(thing)
 		if !ok {
 			t.Errorf("Thing %v was not found in tree during deletion", thing)
 			return
 		}
-		
-		if rt.Size() != len(things2) - i - 1 {
+
+		if rt.Size() != len(things2)-i-1 {
 			t.Errorf("Delete failed to remove %v", thing)
 			return
 		}
@@ -711,6 +711,45 @@ func TestSearchIntersect(t *testing.T) {
 	for _, ind := range expected {
 		if indexOf(q, things[ind]) < 0 {
 			t.Errorf("SearchIntersect failed to find things[%d]", ind)
+		}
+	}
+}
+
+func TestSearchIntersectWithLimit(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{2, 6}, []float64{1, 2}),
+		mustRect(Point{3, 6}, []float64{1, 2}),
+		mustRect(Point{2, 8}, []float64{1, 2}),
+		mustRect(Point{3, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	for k := -1; k <= len(things); k++ {
+		bb := mustRect(Point{2, 1.5}, []float64{10, 5.5})
+		q := rt.SearchIntersectWithLimit(k, bb)
+
+		expected := []int{1, 2, 6, 7, 3, 4}
+		if k >= 0 && k < len(expected) {
+			expected = expected[0:k]
+		}
+
+		if lq, le := len(q), len(expected); lq != le {
+			t.Errorf("Expected %d objects to be found, but found %d", le, lq)
+		}
+
+		for _, ind := range expected {
+			if indexOf(q, things[ind]) < 0 {
+				t.Errorf("SearchIntersect failed to find things[%d] for k = %d", ind, k)
+			}
 		}
 	}
 }
@@ -773,12 +812,12 @@ func TestNearestNeighbor(t *testing.T) {
 	for _, thing := range things {
 		rt.Insert(thing)
 	}
-	
+
 	obj1 := rt.NearestNeighbor(Point{0.5, 0.5})
 	obj2 := rt.NearestNeighbor(Point{1.5, 4.5})
 	obj3 := rt.NearestNeighbor(Point{5, 2.5})
 	obj4 := rt.NearestNeighbor(Point{3.5, 2.5})
-	
+
 	if obj1 != things[0] || obj2 != things[1] || obj3 != things[2] || obj4 != things[2] {
 		t.Errorf("NearestNeighbor failed")
 	}
@@ -797,7 +836,7 @@ func TestNearestNeighbors(t *testing.T) {
 	for _, thing := range things {
 		rt.Insert(thing)
 	}
-	
+
 	objs := rt.NearestNeighbors(3, Point{0.5, 0.5})
 	if objs[0] != things[0] || objs[1] != things[2] || objs[2] != things[5] {
 		t.Errorf("NearestNeighbors failed")
