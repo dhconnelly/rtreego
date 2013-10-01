@@ -56,47 +56,47 @@ func TestNewRectDistError(t *testing.T) {
 }
 
 func TestRectPointCoord(t *testing.T) {
-  p := Point{1.0, -2.5}
-  lengths := []float64{2.5, 8.0}
-  rect, _ := NewRect(p, lengths)
+	p := Point{1.0, -2.5}
+	lengths := []float64{2.5, 8.0}
+	rect, _ := NewRect(p, lengths)
 
-  f := rect.PointCoord(0)
-  if f != 1.0 {
-    t.Errorf("Expected %v.PointCoord(0) == 1.0, got %v", rect, f)
-  }
-  f = rect.PointCoord(1)
-  if f != -2.5 {
-    t.Errorf("Expected %v.PointCoord(1) == -2.5, got %v", rect, f)
-  }
+	f := rect.PointCoord(0)
+	if f != 1.0 {
+		t.Errorf("Expected %v.PointCoord(0) == 1.0, got %v", rect, f)
+	}
+	f = rect.PointCoord(1)
+	if f != -2.5 {
+		t.Errorf("Expected %v.PointCoord(1) == -2.5, got %v", rect, f)
+	}
 }
 
 func TestRectLengthsCoord(t *testing.T) {
-  p := Point{1.0, -2.5}
-  lengths := []float64{2.5, 8.0}
-  rect, _ := NewRect(p, lengths)
+	p := Point{1.0, -2.5}
+	lengths := []float64{2.5, 8.0}
+	rect, _ := NewRect(p, lengths)
 
-  f := rect.LengthsCoord(0)
-  if f != 2.5 {
-    t.Errorf("Expected %v.LengthsCoord(0) == 2.5, got %v", rect, f)
-  }
-  f = rect.LengthsCoord(1)
-  if f != 8.0 {
-    t.Errorf("Expected %v.LengthsCoord(1) == 8.0, got %v", rect, f)
-  }
+	f := rect.LengthsCoord(0)
+	if f != 2.5 {
+		t.Errorf("Expected %v.LengthsCoord(0) == 2.5, got %v", rect, f)
+	}
+	f = rect.LengthsCoord(1)
+	if f != 8.0 {
+		t.Errorf("Expected %v.LengthsCoord(1) == 8.0, got %v", rect, f)
+	}
 }
 
 func TestRectEqual(t *testing.T) {
-  p := Point{1.0, -2.5, 3.0}
-  lengths := []float64{2.5, 8.0, 1.5}
-  a, _ := NewRect(p, lengths)
-  b, _ := NewRect(p, lengths)
-  c, _ := NewRect(Point{0.0, -2.5, 3.0}, lengths)
-  if !a.Equal(b) {
-    t.Errorf("Expected %v.Equal(%v) to return true", a, b)
-  }
-  if a.Equal(c) {
-    t.Errorf("Expected %v.Equal(%v) to return false", a, c)
-  }
+	p := Point{1.0, -2.5, 3.0}
+	lengths := []float64{2.5, 8.0, 1.5}
+	a, _ := NewRect(p, lengths)
+	b, _ := NewRect(p, lengths)
+	c, _ := NewRect(Point{0.0, -2.5, 3.0}, lengths)
+	if !a.Equal(b) {
+		t.Errorf("Expected %v.Equal(%v) to return true", a, b)
+	}
+	if a.Equal(c) {
+		t.Errorf("Expected %v.Equal(%v) to return false", a, c)
+	}
 }
 
 func TestRectSize(t *testing.T) {
