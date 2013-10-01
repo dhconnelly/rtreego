@@ -733,13 +733,20 @@ func TestSearchIntersectWithLimit(t *testing.T) {
 		rt.Insert(thing)
 	}
 
+	bb := mustRect(Point{2, 1.5}, []float64{10, 5.5})
+
+	// bbIntersects contains the indices of the rectangles that fall in
+	// the bounding box bb.
+	bbIntersects := []int{1, 2, 6, 7, 3, 4}
+
+	// Loop through all possible limits k of SearchIntersectWithLimit,
+	// and test that the results are as expected.
 	for k := -1; k <= len(things); k++ {
-		bb := mustRect(Point{2, 1.5}, []float64{10, 5.5})
 		q := rt.SearchIntersectWithLimit(k, bb)
 
-		expected := []int{1, 2, 6, 7, 3, 4}
-		if k >= 0 && k < len(expected) {
-			expected = expected[0:k]
+		expected := bbIntersects
+		if k >= 0 && k < len(bbIntersects) {
+			expected = bbIntersects[0:k]
 		}
 
 		if lq, le := len(q), len(expected); lq != le {
