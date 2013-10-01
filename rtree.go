@@ -20,10 +20,10 @@ type Rtree struct {
 	MaxChildren int
 	root        *node
 	size        int
-	height int
+	height      int
 }
 
-// NewTree creates a new R-tree instance.  
+// NewTree creates a new R-tree instance.
 func NewTree(Dim, MinChildren, MaxChildren int) *Rtree {
 	rt := Rtree{Dim: Dim, MinChildren: MinChildren, MaxChildren: MaxChildren}
 	rt.height = 1
@@ -53,7 +53,7 @@ type node struct {
 	parent  *node
 	leaf    bool
 	entries []entry
-	level int // node depth in the Rtree
+	level   int // node depth in the Rtree
 }
 
 func (n *node) String() string {
@@ -114,7 +114,7 @@ func (tree *Rtree) insert(e entry, level int) {
 		tree.height++
 		tree.root = &node{
 			parent: nil,
-			level: tree.height,
+			level:  tree.height,
 			entries: []entry{
 				entry{bb: oldRoot.computeBoundingBox(), child: oldRoot},
 				entry{bb: splitRoot.computeBoundingBox(), child: splitRoot},
@@ -212,9 +212,9 @@ func (n *node) split(minGroupSize int) (left, right *node) {
 	left = n
 	left.entries = []entry{leftSeed}
 	right = &node{
-		parent: n.parent,
-		leaf: n.leaf,
-		level: n.level,
+		parent:  n.parent,
+		leaf:    n.leaf,
+		level:   n.level,
 		entries: []entry{rightSeed},
 	}
 
@@ -345,7 +345,7 @@ func (tree *Rtree) Delete(obj Spatial) bool {
 	}
 
 	n.entries = append(n.entries[:ind], n.entries[ind+1:]...)
-	
+
 	tree.condenseTree(n)
 	tree.size--
 
@@ -422,17 +422,29 @@ func (tree *Rtree) condenseTree(n *node) {
 // Implemented per Section 3.1 of "R-trees: A Dynamic Index Structure for
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
 func (tree *Rtree) SearchIntersect(bb *Rect) []Spatial {
-	return tree.searchIntersect(tree.root, bb)
+	return tree.searchIntersect(-1, tree.root, bb)
 }
 
-func (tree *Rtree) searchIntersect(n *node, bb *Rect) []Spatial {
+// SearchIntersectWithLimit is similar to SearchIntersect, but returns
+// immediately when the first k results are found. A negative k behaves exactly
+// like SearchIntersect and returns all the results.
+func (tree *Rtree) SearchIntersectWithLimit(k int, bb *Rect) []Spatial {
+	return tree.searchIntersect(k, tree.root, bb)
+}
+
+func (tree *Rtree) searchIntersect(k int, n *node, bb *Rect) []Spatial {
 	results := []Spatial{}
 	for _, e := range n.entries {
+		if k >= 0 && len(results) >= k {
+			break
+		}
+
 		if intersect(e.bb, bb) != nil {
 			if n.leaf {
 				results = append(results, e.obj)
 			} else {
-				results = append(results, tree.searchIntersect(e.child, bb)...)
+				margin := k - len(results)
+				results = append(results, tree.searchIntersect(margin, e.child, bb)...)
 			}
 		}
 	}
@@ -450,8 +462,8 @@ func (tree *Rtree) NearestNeighbor(p Point) Spatial {
 
 type entrySlice struct {
 	entries []entry
-	dists []float64
-	pt Point
+	dists   []float64
+	pt      Point
 }
 
 func (s entrySlice) Len() int { return len(s.entries) }
@@ -514,7 +526,7 @@ func (tree *Rtree) nearestNeighbor(p Point, n *node, d float64, nearest Spatial)
 			}
 		}
 	}
-	
+
 	return nearest, d
 }
 
@@ -538,7 +550,7 @@ func insertNearest(k int, dists []float64, nearest []Spatial, dist float64, obj 
 	if i >= k {
 		return dists, nearest
 	}
-	
+
 	left, right := dists[:i], dists[i:k-1]
 	updatedDists := make([]float64, k)
 	copy(updatedDists, left)
@@ -550,7 +562,7 @@ func insertNearest(k int, dists []float64, nearest []Spatial, dist float64, obj 
 	copy(updatedNearest, leftObjs)
 	updatedNearest[i] = obj
 	copy(updatedNearest[i+1:], rightObjs)
-	
+
 	return updatedDists, updatedNearest
 }
 
