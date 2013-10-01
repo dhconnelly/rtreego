@@ -426,7 +426,8 @@ func (tree *Rtree) SearchIntersect(bb *Rect) []Spatial {
 }
 
 // SearchIntersectWithLimit is similar to SearchIntersect, but returns
-// immediately when the first k results are found.
+// immediately when the first k results are found. A negative k behaves exactly
+// like SearchIntersect and returns all the results.
 func (tree *Rtree) SearchIntersectWithLimit(k int, bb *Rect) []Spatial {
 	return tree.searchIntersect(k, tree.root, bb)
 }
