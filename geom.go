@@ -164,18 +164,22 @@ func (r *Rect) String() string {
 // NewRect constructs and returns a pointer to a Rect given a corner point and
 // the lengths of each dimension.  The point p should be the most-negative point
 // on the rectangle (in every dimension) and every length should be positive.
-func NewRect(p Point, lengths []float64) (*Rect, error) {
+func NewRect(p Point, lengths []float64) (r *Rect, err error) {
+	r = new(Rect)
+	r.p = p
 	if len(p) != len(lengths) {
-		return nil, &DimError{len(p), len(lengths)}
+		err = &DimError{len(p), len(lengths)}
+		return
 	}
-	q := make([]float64, len(p))
+	r.q = make([]float64, len(p))
 	for i := range p {
 		if lengths[i] <= 0 {
-			return nil, DistError(lengths[i])
+			err = DistError(lengths[i])
+			return
 		}
-		q[i] = p[i] + lengths[i]
+		r.q[i] = p[i] + lengths[i]
 	}
-	return &Rect{p, q}, nil
+	return
 }
 
 // size computes the measure of a rectangle (the product of its side lengths).
@@ -304,40 +308,38 @@ func (p Point) ToRect(tol float64) *Rect {
 }
 
 // boundingBox constructs the smallest rectangle containing both r1 and r2.
-func boundingBox(r1, r2 *Rect) *Rect {
+func boundingBox(r1, r2 *Rect) (bb *Rect) {
+	bb = new(Rect)
 	dim := len(r1.p)
+	bb.p = make([]float64, dim)
+	bb.q = make([]float64, dim)
 	if len(r2.p) != dim {
 		panic(DimError{dim, len(r2.p)})
 	}
-
-	p := make([]float64, dim)
-	lengths := make([]float64, dim)
-	for i := range p {
+	for i := 0; i < dim; i++ {
 		if r1.p[i] <= r2.p[i] {
-			p[i] = r1.p[i]
+			bb.p[i] = r1.p[i]
 		} else {
-			p[i] = r2.p[i]
+			bb.p[i] = r2.p[i]
 		}
-
 		if r1.q[i] <= r2.q[i] {
-			lengths[i] = r2.q[i] - p[i]
+			bb.q[i] = r2.q[i]
 		} else {
-			lengths[i] = r1.q[i] - p[i]
+			bb.q[i] = r1.q[i]
 		}
 	}
-
-	r, _ := NewRect(p, lengths)
-	return r
+	return
 }
 
 // boundingBoxN constructs the smallest rectangle containing all of r...
-func boundingBoxN(rects ...*Rect) *Rect {
+func boundingBoxN(rects ...*Rect) (bb *Rect) {
 	if len(rects) == 1 {
-		return rects[0]
+		bb = rects[0]
+		return
 	}
-	bb := boundingBox(rects[0], rects[1])
+	bb = boundingBox(rects[0], rects[1])
 	for _, rect := range rects[2:] {
 		bb = boundingBox(bb, rect)
 	}
-	return bb
+	return
 }

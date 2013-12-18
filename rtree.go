@@ -189,12 +189,13 @@ func (n *node) getEntry() *entry {
 }
 
 // computeBoundingBox finds the MBR of the children of n.
-func (n *node) computeBoundingBox() *Rect {
-	childBoxes := []*Rect{}
-	for _, e := range n.entries {
-		childBoxes = append(childBoxes, e.bb)
+func (n *node) computeBoundingBox() (bb *Rect) {
+	childBoxes := make([]*Rect, len(n.entries))
+	for i, e := range n.entries {
+		childBoxes[i] = e.bb
 	}
-	return boundingBoxN(childBoxes...)
+	bb = boundingBoxN(childBoxes...)
+	return
 }
 
 // split splits a node into two groups while attempting to minimize the
