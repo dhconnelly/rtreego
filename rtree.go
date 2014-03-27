@@ -81,8 +81,7 @@ type Spatial interface {
 
 // Insertion
 
-// Insert inserts a spatial object into the tree.  A DimError is returned if
-// the dimensions of the object don't match those of the tree.  If insertion
+// Insert inserts a spatial object into the tree.  If insertion
 // causes a leaf node to overflow, the tree is rebalanced automatically.
 //
 // Implemented per Section 3.2 of "R-trees: A Dynamic Index Structure for
@@ -323,9 +322,8 @@ func pickNext(left, right *node, entries []entry) (next int) {
 
 // Deletion
 
-// Delete removes an object from the tree.  If the object is not found, ok
-// is false; otherwise ok is true.  A DimError is returned if the specified
-// object has improper dimensions for the tree.
+// Delete removes an object from the tree.  If the object is not found, returns
+// false, otherwise returns true.
 //
 // Implemented per Section 3.3 of "R-trees: A Dynamic Index Structure for
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
