@@ -11,10 +11,8 @@ About
 
 The R-tree is a popular data structure for efficiently storing and
 querying spatial objects; one common use is implementing geospatial
-indexes in database management systems.  The variant implemented here,
-known as the R*-tree, improves performance and increases storage
-utilization.  Both bounding-box queries and k-nearest-neighbor queries
-are supported.
+indexes in database management systems.  Both bounding-box queries
+and k-nearest-neighbor queries are supported.
 
 R-trees are balanced, so maximum tree height is guaranteed to be
 logarithmic in the number of entries; however, good worst-case
@@ -59,8 +57,8 @@ of `float64`s:
 
 To create a `Rect`, specify a location and the lengths of the sides:
 
-	r1 := rtreego.NewRect(p1, []float64{1, 2})
-	r2 := rtreego.NewRect(p2, []float64{1.7, 2.7})
+	r1, _ := rtreego.NewRect(p1, []float64{1, 2})
+	r2, _ := rtreego.NewRect(p2, []float64{1.7, 2.7})
 
 To demonstrate, let's create and store some test data.
 
@@ -117,13 +115,13 @@ containment search and intersection search.  The former returns all objects that
 fall strictly inside the search rectangle, while the latter returns all objects
 that touch the search rectangle.
 
-	bb := rtreego.NewRect(rtreego.Point{1.7, -3.4}, []float64{3.2, 1.9})
+	bb, _ := rtreego.NewRect(rtreego.Point{1.7, -3.4}, []float64{3.2, 1.9})
 
 	// Get a slice of the objects in rt that intersect bb:
-	results, _ := rt.SearchIntersect(bb)
+	results := rt.SearchIntersect(bb)
 
 	// Get a slice of the objects in rt that are contained inside bb:
-	results, _ = rt.SearchContained(bb)
+	results = rt.SearchContained(bb)
 
 Nearest-neighbor queries find the objects in a tree closest to a specified
 query point.
@@ -132,12 +130,12 @@ query point.
 	k := 5
 
 	// Get a slice of the k objects in rt closest to q:
-	results, _ = rt.SearchNearestNeighbors(q, k)
+	results = rt.SearchNearestNeighbors(q, k)
 
 ### More information
 
-See [GoPkgDoc](http://gopkgdoc.appspot.com/pkg/github.com/dhconnelly/rtreego)
-for full API documentation.
+See [GoDoc](http://godoc.org/github.com/dhconnelly/rtreego) for full API
+documentation.
 
 References
 ----------
