@@ -123,6 +123,19 @@ that touch the search rectangle.
 	// Get a slice of the objects in rt that are contained inside bb:
 	results = rt.SearchContained(bb)
 
+### Filters
+
+You can filter out values during searches by implementing the Filter interface.
+
+  type Filter interface {
+		Filter(results []Spatial, object Spatial) (refuse, abort bool)
+	}
+
+A filter for limiting results by result count is included in the package.
+
+	// maximum of three results will be returned
+  tree.SearchIntersect(bb, NewLimitFilter(3))
+
 Nearest-neighbor queries find the objects in a tree closest to a specified
 query point.
 

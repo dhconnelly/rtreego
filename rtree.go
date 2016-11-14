@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// A library for efficiently storing and querying spatial data.
+// Package rtreego is a library for efficiently storing and querying spatial data.
 package rtreego
 
 import (
@@ -416,35 +416,46 @@ func (tree *Rtree) condenseTree(n *node) {
 
 // Searching
 
-// SearchIntersectBB returns all objects that intersect the specified rectangle.
-//
+// SearchIntersect returns all objects that intersect the specified rectangle.
 // Implemented per Section 3.1 of "R-trees: A Dynamic Index Structure for
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
-func (tree *Rtree) SearchIntersect(bb *Rect) []Spatial {
-	return tree.searchIntersect(-1, tree.root, bb)
+func (tree *Rtree) SearchIntersect(bb *Rect, filters ...Filter) []Spatial {
+	return tree.searchIntersect([]Spatial{}, tree.root, bb, filters)
 }
 
 // SearchIntersectWithLimit is similar to SearchIntersect, but returns
 // immediately when the first k results are found. A negative k behaves exactly
 // like SearchIntersect and returns all the results.
+//
+// Kept for backwards compatibility, please use SearchIntersect with a
+// LimitFilter.
 func (tree *Rtree) SearchIntersectWithLimit(k int, bb *Rect) []Spatial {
-	return tree.searchIntersect(k, tree.root, bb)
+	// backwards compatibility, previous implementation didn't limit results if
+	// k was negative.
+	if k < 0 {
+		return tree.SearchIntersect(bb)
+	}
+	return tree.SearchIntersect(bb, NewLimitFilter(k))
 }
 
-func (tree *Rtree) searchIntersect(k int, n *node, bb *Rect) []Spatial {
-	results := []Spatial{}
+func (tree *Rtree) searchIntersect(results []Spatial, n *node, bb *Rect, filters []Filter) []Spatial {
 	for _, e := range n.entries {
-		if k >= 0 && len(results) >= k {
-			break
+		if intersect(e.bb, bb) == nil {
+			continue
 		}
 
-		if intersect(e.bb, bb) != nil {
-			if n.leaf {
-				results = append(results, e.obj)
-			} else {
-				margin := k - len(results)
-				results = append(results, tree.searchIntersect(margin, e.child, bb)...)
-			}
+		if !n.leaf {
+			results = tree.searchIntersect(results, e.child, bb, filters)
+			continue
+		}
+
+		refuse, abort := applyFilters(results, e.obj, filters)
+		if !refuse {
+			results = append(results, e.obj)
+		}
+
+		if abort {
+			break
 		}
 	}
 	return results
