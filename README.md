@@ -110,18 +110,13 @@ corrupt the tree.
 
 Bounding-box and k-nearest-neighbors queries are supported.
 
-Bounding-box queries require a search `*Rect` argument and come in two flavors:
-containment search and intersection search.  The former returns all objects that
-fall strictly inside the search rectangle, while the latter returns all objects
-that touch the search rectangle.
+Bounding-box queries require a search `*Rect`. It returns all objects that
+touch the search rectangle.
 
 	bb, _ := rtreego.NewRect(rtreego.Point{1.7, -3.4}, []float64{3.2, 1.9})
 
 	// Get a slice of the objects in rt that intersect bb:
 	results := rt.SearchIntersect(bb)
-
-	// Get a slice of the objects in rt that are contained inside bb:
-	results = rt.SearchContained(bb)
 
 ### Filters
 
