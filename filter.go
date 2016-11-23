@@ -4,15 +4,13 @@ package rtreego
 // should be treated as read-only. If refuse is true, the currenty entry will
 // not be added to the result set. If abort is true, the search is aborted and
 // the current result set will be returned.
-type Filter interface {
-	Filter(results []Spatial, object Spatial) (refuse, abort bool)
-}
+type Filter func(results []Spatial, object Spatial) (refuse, abort bool)
 
 // ApplyFilters applies the given filters and returns their consensus.
 func applyFilters(results []Spatial, object Spatial, filters []Filter) (bool, bool) {
 	var refuse, abort bool
-	for _, f := range filters {
-		ref, abt := f.Filter(results, object)
+	for _, filter := range filters {
+		ref, abt := filter(results, object)
 
 		if ref {
 			refuse = true
@@ -32,24 +30,13 @@ func applyFilters(results []Spatial, object Spatial, filters []Filter) (bool, bo
 	return refuse, abort
 }
 
-// LimitFilter aborts the search after certain amount of results have been
-// gathered.
-type LimitFilter struct {
-	limit int
-}
+// LimitFilter checks if the results have reached the limit size and aborts if so.
+func LimitFilter(limit int) Filter {
+	return func(results []Spatial, object Spatial) (refuse, abort bool) {
+		if len(results) >= limit {
+			return true, true
+		}
 
-// NewLimitFilter returns a new limit filter.
-func NewLimitFilter(limit int) *LimitFilter {
-	return &LimitFilter{
-		limit: limit,
+		return false, false
 	}
-}
-
-// Filter checks if the results have reached the limit size and aborts if so.
-func (f *LimitFilter) Filter(results []Spatial, object Spatial) (bool, bool) {
-	if len(results) >= f.limit {
-		return true, true
-	}
-
-	return false, false
 }

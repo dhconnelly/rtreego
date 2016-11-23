@@ -435,7 +435,7 @@ func (tree *Rtree) SearchIntersectWithLimit(k int, bb *Rect) []Spatial {
 	if k < 0 {
 		return tree.SearchIntersect(bb)
 	}
-	return tree.SearchIntersect(bb, NewLimitFilter(k))
+	return tree.SearchIntersect(bb, LimitFilter(k))
 }
 
 func (tree *Rtree) searchIntersect(results []Spatial, n *node, bb *Rect, filters []Filter) []Spatial {
