@@ -36,7 +36,7 @@ func printEntry(e entry, level int) {
 	if e.child != nil {
 		printNode(e.child, level)
 	} else {
-		fmt.Printf("%sObject: %p\n", padding, e.obj)
+		fmt.Printf("%sObject: %v\n", padding, e.obj)
 	}
 	fmt.Println()
 }

@@ -74,7 +74,7 @@ func (e entry) String() string {
 	return fmt.Sprintf("entry{bb: %v, obj: %v}", e.bb, e.obj)
 }
 
-// Any type that implements Spatial can be stored in an Rtree and queried.
+// Spatial is an interface for objects that can be stored in an Rtree and queried.
 type Spatial interface {
 	Bounds() *Rect
 }
@@ -540,6 +540,7 @@ func (tree *Rtree) nearestNeighbor(p Point, n *node, d float64, nearest Spatial)
 	return nearest, d
 }
 
+// NearestNeighbors gets the closest Spatials to the Point.
 func (tree *Rtree) NearestNeighbors(k int, p Point) []Spatial {
 	dists := make([]float64, k)
 	objs := make([]Spatial, k)
