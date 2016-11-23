@@ -127,17 +127,17 @@ type Rect struct {
 	p, q Point // Enforced by NewRect: p[i] <= q[i] for all i.
 }
 
-// The coordinate of the point of the rectangle at i
+// PointCoord returns the coordinate of the point of the rectangle at i
 func (r *Rect) PointCoord(i int) float64 {
 	return r.p[i]
 }
 
-// The coordinate of the lengths of the rectangle at i
+// LengthsCoord returns the coordinate of the lengths of the rectangle at i
 func (r *Rect) LengthsCoord(i int) float64 {
 	return r.q[i] - r.p[i]
 }
 
-// Returns true if the two rectangles are equal
+// Equal returns true if the two rectangles are equal
 func (r *Rect) Equal(other *Rect) bool {
 	for i, e := range r.p {
 		if e != other.p[i] {
@@ -228,13 +228,13 @@ func (r *Rect) containsPoint(p Point) bool {
 }
 
 // containsRect tests whether r2 is is located inside r1.
-func (r1 *Rect) containsRect(r2 *Rect) bool {
-	if len(r1.p) != len(r2.p) {
-		panic(DimError{len(r1.p), len(r2.p)})
+func (r *Rect) containsRect(r2 *Rect) bool {
+	if len(r.p) != len(r2.p) {
+		panic(DimError{len(r.p), len(r2.p)})
 	}
 
-	for i, a1 := range r1.p {
-		b1, a2, b2 := r1.q[i], r2.p[i], r2.q[i]
+	for i, a1 := range r.p {
+		b1, a2, b2 := r.q[i], r2.p[i], r2.q[i]
 		// enforced by constructor: a1 <= b1 and a2 <= b2.
 		// so containment holds if and only if a1 <= a2 <= b2 <= b1
 		// for every dimension.

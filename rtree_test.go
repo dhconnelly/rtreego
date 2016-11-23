@@ -3,6 +3,7 @@ package rtreego
 import (
 	"fmt"
 	"math/rand"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -36,7 +37,7 @@ func printEntry(e entry, level int) {
 	if e.child != nil {
 		printNode(e.child, level)
 	} else {
-		fmt.Printf("%sObject: %p\n", padding, e.obj)
+		fmt.Printf("%sObject: %v\n", padding, e.obj)
 	}
 	fmt.Println()
 }
@@ -758,6 +759,63 @@ func TestSearchIntersectWithLimit(t *testing.T) {
 				t.Errorf("SearchIntersect failed to find things[%d] for k = %d", ind, k)
 			}
 		}
+	}
+}
+
+func TestSearchIntersectWithTestFilter(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{2, 6}, []float64{1, 2}),
+		mustRect(Point{3, 6}, []float64{1, 2}),
+		mustRect(Point{2, 8}, []float64{1, 2}),
+		mustRect(Point{3, 8}, []float64{1, 2}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	bb := mustRect(Point{2, 1.5}, []float64{10, 5.5})
+
+	// intersecting indexes are 1, 2, 6, 7, 3, 4
+	// rects which we do not filter out
+	expected := []int{1, 6, 4}
+
+	// this test filter will only pick the objects that match the specified indexes
+	// in things
+	objects := rt.SearchIntersect(bb, func(results []Spatial, object Spatial) (bool, bool) {
+		rect := object.(*Rect)
+
+		for _, a := range expected {
+			if rect == things[a] {
+				return false, false
+			}
+		}
+
+		return true, false
+	})
+
+	if len(expected) != len(objects) {
+		t.Fatalf("expected %d results but received %d:", len(expected), len(objects))
+	}
+
+	actual := make([]int, 3)
+	for _, obj := range objects {
+		rect := obj.(*Rect)
+		for i := range things {
+			if rect == things[i] {
+				actual = append(actual, i)
+			}
+		}
+	}
+
+	if reflect.DeepEqual(actual, expected) {
+		t.Errorf("expected results: %v, actual results: %v", expected, actual)
 	}
 }
 
