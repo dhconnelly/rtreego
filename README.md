@@ -82,6 +82,23 @@ We can insert and delete objects from the tree in any order.
     // do some stuff...
     rt.Insert(anotherThing)
 
+Note that ```Delete``` function does the equality comparison by comparing the
+memory addresses of the objects. If you do not have a pointer to the original
+object anymore, you can define a custom comparator.
+
+    type Comparator func(obj1, obj2 Spatial) (equal bool)
+
+You can use a custom comparator with ```DeleteWithComparator``` function.
+
+    cmp := func(obj1, obj2 Spatial) bool {
+      sp1 := obj1.(*IDRect)
+      sp2 := obj2.(*IDRect)
+
+      return sp1.ID == sp2.ID
+    }
+
+    rt.DeleteWithComparator(obj, cmp)
+
 If you want to store points instead of rectangles, you can easily convert a
 point into a rectangle using the `ToRect` method:
 

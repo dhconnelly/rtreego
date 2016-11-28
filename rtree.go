@@ -11,6 +11,13 @@ import (
 	"sort"
 )
 
+// Comparator compares two spatials and returns whether they are equal.
+type Comparator func(obj1, obj2 Spatial) (equal bool)
+
+func defaultComparator(obj1, obj2 Spatial) bool {
+	return obj1 == obj2
+}
+
 // Rtree represents an R-tree, a balanced search tree for storing and querying
 // spatial objects.  Dim specifies the number of spatial dimensions and
 // MinChildren/MaxChildren specify the minimum/maximum branching factors.
@@ -323,19 +330,28 @@ func pickNext(left, right *node, entries []entry) (next int) {
 // Deletion
 
 // Delete removes an object from the tree.  If the object is not found, returns
-// false, otherwise returns true.
+// false, otherwise returns true. Uses the default comparator when checking
+// equality.
 //
 // Implemented per Section 3.3 of "R-trees: A Dynamic Index Structure for
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
 func (tree *Rtree) Delete(obj Spatial) bool {
-	n := tree.findLeaf(tree.root, obj)
+	return tree.DeleteWithComparator(obj, defaultComparator)
+}
+
+// DeleteWithComparator removes an object from the tree using a custom
+// comparator for evaluating equalness. This is useful when you want to remove
+// an object from a tree but don't have a pointer to the original object
+// anymore.
+func (tree *Rtree) DeleteWithComparator(obj Spatial, cmp Comparator) bool {
+	n := tree.findLeaf(tree.root, obj, cmp)
 	if n == nil {
 		return false
 	}
 
 	ind := -1
 	for i, e := range n.entries {
-		if e.obj == obj {
+		if cmp(e.obj, obj) {
 			ind = i
 		}
 	}
@@ -356,20 +372,20 @@ func (tree *Rtree) Delete(obj Spatial) bool {
 }
 
 // findLeaf finds the leaf node containing obj.
-func (tree *Rtree) findLeaf(n *node, obj Spatial) *node {
+func (tree *Rtree) findLeaf(n *node, obj Spatial, cmp Comparator) *node {
 	if n.leaf {
 		return n
 	}
 	// if not leaf, search all candidate subtrees
 	for _, e := range n.entries {
 		if e.bb.containsRect(obj.Bounds()) {
-			leaf := tree.findLeaf(e.child, obj)
+			leaf := tree.findLeaf(e.child, obj, cmp)
 			if leaf == nil {
 				continue
 			}
 			// check if the leaf actually contains the object
 			for _, leafEntry := range leaf.entries {
-				if leafEntry.obj == obj {
+				if cmp(leafEntry.obj, obj) {
 					return leaf
 				}
 			}
