@@ -2,6 +2,7 @@ package rtreego
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"reflect"
 	"strings"
@@ -493,7 +494,7 @@ func TestFindLeaf(t *testing.T) {
 	}
 	verify(t, rt.root)
 	for _, thing := range things {
-		leaf := rt.findLeaf(rt.root, thing)
+		leaf := rt.findLeaf(rt.root, thing, defaultComparator)
 		if leaf == nil {
 			printNode(rt.root, 0)
 			t.Errorf("Unable to find leaf containing an entry after insertion!")
@@ -532,7 +533,7 @@ func TestFindLeafDoesNotExist(t *testing.T) {
 	}
 
 	obj := mustRect(Point{99, 99}, []float64{99, 99})
-	leaf := rt.findLeaf(rt.root, obj)
+	leaf := rt.findLeaf(rt.root, obj, defaultComparator)
 	if leaf != nil {
 		t.Errorf("findLeaf failed to return nil for non-existent object")
 	}
@@ -671,6 +672,67 @@ func TestDelete(t *testing.T) {
 
 	for i, thing := range things2 {
 		ok := rt.Delete(thing)
+		if !ok {
+			t.Errorf("Thing %v was not found in tree during deletion", thing)
+			return
+		}
+
+		if rt.Size() != len(things2)-i-1 {
+			t.Errorf("Delete failed to remove %v", thing)
+			return
+		}
+		verify(t, rt.root)
+	}
+}
+
+func TestDeleteWithComparator(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+
+	type IDRect struct {
+		ID string
+		*Rect
+	}
+
+	things := []*IDRect{
+		{"1", mustRect(Point{0, 0}, []float64{2, 1})},
+		{"2", mustRect(Point{3, 1}, []float64{1, 2})},
+		{"3", mustRect(Point{1, 2}, []float64{2, 2})},
+		{"4", mustRect(Point{8, 6}, []float64{1, 1})},
+		{"5", mustRect(Point{10, 3}, []float64{1, 2})},
+		{"6", mustRect(Point{11, 7}, []float64{1, 1})},
+		{"7", mustRect(Point{0, 6}, []float64{1, 2})},
+		{"8", mustRect(Point{1, 6}, []float64{1, 2})},
+		{"9", mustRect(Point{0, 8}, []float64{1, 2})},
+		{"10", mustRect(Point{1, 8}, []float64{1, 2})},
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	verify(t, rt.root)
+
+	cmp := func(obj1, obj2 Spatial) bool {
+		idr1 := obj1.(*IDRect)
+		idr2 := obj2.(*IDRect)
+		return idr1.ID == idr2.ID
+	}
+
+	things2 := []*IDRect{}
+	for len(things) > 0 {
+		i := rand.Int() % len(things)
+		// make a deep copy
+		copy := &IDRect{things[i].ID, &(*things[i].Rect)}
+		things2 = append(things2, copy)
+
+		if !cmp(things[i], copy) {
+			log.Fatalf("expected copy to be equal to the original, original: %v, copy: %v", things[i], copy)
+		}
+
+		things = append(things[:i], things[i+1:]...)
+	}
+
+	for i, thing := range things2 {
+		ok := rt.DeleteWithComparator(thing, cmp)
 		if !ok {
 			t.Errorf("Thing %v was not found in tree during deletion", thing)
 			return

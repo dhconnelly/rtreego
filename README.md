@@ -82,6 +82,23 @@ We can insert and delete objects from the tree in any order.
     // do some stuff...
     rt.Insert(anotherThing)
 
+Note that ```Delete``` function does the equality comparison by comparing the
+memory addresses of the objects. If you do not have a pointer to the original
+object anymore, you can define a custom comparator.
+
+    type Comparator func(obj1, obj2 Spatial) (equal bool)
+
+You can use a custom comparator with ```DeleteWithComparator``` function.
+
+    cmp := func(obj1, obj2 Spatial) bool {
+      sp1 := obj1.(*IDRect)
+      sp2 := obj2.(*IDRect)
+
+      return sp1.ID == sp2.ID
+    }
+
+    rt.DeleteWithComparator(obj, cmp)
+
 If you want to store points instead of rectangles, you can easily convert a
 point into a rectangle using the `ToRect` method:
 
@@ -120,16 +137,15 @@ touch the search rectangle.
 
 ### Filters
 
-You can filter out values during searches by implementing the Filter interface.
+You can filter out values during searches by implementing Filter functions.
 
-    type Filter interface {
-      Filter(results []Spatial, object Spatial) (refuse, abort bool)
-    }
+    type Filter func(results []Spatial, object Spatial) (refuse, abort bool)
 
-A filter for limiting results by result count is included in the package.
+A filter for limiting results by result count is included in the package for
+backwards compatibility.
 
     // maximum of three results will be returned
-    tree.SearchIntersect(bb, NewLimitFilter(3))
+    tree.SearchIntersect(bb, LimitFilter(3))
 
 Nearest-neighbor queries find the objects in a tree closest to a specified
 query point.
