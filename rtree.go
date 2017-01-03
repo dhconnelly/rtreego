@@ -368,6 +368,8 @@ func (tree *Rtree) DeleteWithComparator(obj Spatial, cmp Comparator) bool {
 		tree.root = tree.root.entries[0].child
 	}
 
+	tree.height = tree.root.level
+
 	return true
 }
 

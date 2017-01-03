@@ -685,6 +685,28 @@ func TestDelete(t *testing.T) {
 	}
 }
 
+func TestDeleteWithDepthChange(t *testing.T) {
+	rt := NewTree(2, 3, 3)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+	}
+	for _, thing := range things {
+		rt.Insert(thing)
+	}
+
+	// delete last item and condense nodes
+	rt.Delete(things[3])
+
+	// rt.height should be 1 otherwise insert increases height to 3
+	rt.Insert(things[3])
+
+	// and verify would fail
+	verify(t, rt.root)
+}
+
 func TestDeleteWithComparator(t *testing.T) {
 	rt := NewTree(2, 3, 3)
 
