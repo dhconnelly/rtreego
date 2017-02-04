@@ -535,13 +535,13 @@ func pruneEntries(p Point, entries []entry, minDists []float64) []entry {
 }
 
 func pruneEntriesMinDist(d float64, entries []entry, minDists []float64) []entry {
-	pruned := []entry{}
-	for i := range entries {
-		if minDists[i] <= d {
-			pruned = append(pruned, entries[i])
+	var i int
+	for ; i < len(entries); i++ {
+		if minDists[i] > d {
+			break
 		}
 	}
-	return pruned
+	return entries[:i]
 }
 
 func (tree *Rtree) nearestNeighbor(p Point, n *node, d float64, nearest Spatial) (Spatial, float64) {
