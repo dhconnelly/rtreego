@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -932,8 +933,7 @@ func TestSortEntries(t *testing.T) {
 	objs := []*Rect{
 		mustRect(Point{1, 1}, []float64{1, 1}),
 		mustRect(Point{2, 2}, []float64{1, 1}),
-		mustRect(Point{3, 3}, []float64{1, 1}),
-	}
+		mustRect(Point{3, 3}, []float64{1, 1})}
 	entries := []entry{
 		entry{objs[2], nil, objs[2]},
 		entry{objs[1], nil, objs[1]},
@@ -972,6 +972,26 @@ func TestNearestNeighbor(t *testing.T) {
 	}
 }
 
+type sortableRects struct {
+	r []*Rect
+	p Point
+}
+
+func (r sortableRects) Less(i, j int) bool {
+	if r.p.minDist(r.r[i]) < r.p.minDist(r.r[j]) {
+		return true
+	}
+	return false
+}
+
+func (r sortableRects) Len() int {
+	return len(r.r)
+}
+
+func (r sortableRects) Swap(i, j int) {
+	r.r[i], r.r[j] = r.r[j], r.r[i]
+}
+
 func TestNearestNeighbors(t *testing.T) {
 	rt := NewTree(2, 3, 3)
 	things := []*Rect{
@@ -986,8 +1006,18 @@ func TestNearestNeighbors(t *testing.T) {
 		rt.Insert(thing)
 	}
 
-	objs := rt.NearestNeighbors(3, Point{0.5, 0.5})
-	if objs[0] != things[0] || objs[1] != things[2] || objs[2] != things[5] {
-		t.Errorf("NearestNeighbors failed")
+	p := Point{0.5, 0.5}
+	sort.Sort(sortableRects{things, p})
+
+	objs := rt.NearestNeighbors(len(things), p)
+	for i := range things {
+		if objs[i] != things[i] {
+			t.Errorf("NearestNeighbors failed at index %d: %v != %v", i, objs[i], things[i])
+		}
+	}
+
+	objs = rt.NearestNeighbors(len(things)+2, p)
+	if len(objs) > len(things) {
+		t.Errorf("NearestNeighbors failed: too many elements")
 	}
 }
