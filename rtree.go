@@ -593,18 +593,16 @@ func insertNearest(k int, dists []float64, nearest []Spatial, dist float64, obj 
 	}
 
 	left, right := dists[:i], dists[i:len(dists)-1]
-	updatedDists := make([]float64, len(dists))
-	copy(updatedDists, left)
-	updatedDists[i] = dist
-	copy(updatedDists[i+1:], right)
+	copy(dists, left)
+	copy(dists[i+1:], right)
+	dists[i] = dist
 
 	leftObjs, rightObjs := nearest[:i], nearest[i:len(nearest)-1]
-	updatedNearest := make([]Spatial, len(nearest))
-	copy(updatedNearest, leftObjs)
-	updatedNearest[i] = obj
-	copy(updatedNearest[i+1:], rightObjs)
+	copy(nearest, leftObjs)
+	copy(nearest[i+1:], rightObjs)
+	nearest[i] = obj
 
-	return updatedDists, updatedNearest
+	return dists, nearest
 }
 
 func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, nearest []Spatial) ([]Spatial, []float64) {
