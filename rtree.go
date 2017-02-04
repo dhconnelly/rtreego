@@ -534,6 +534,16 @@ func pruneEntries(p Point, entries []entry, minDists []float64) []entry {
 	return pruned
 }
 
+func pruneEntriesMinDist(d float64, entries []entry, minDists []float64) []entry {
+	pruned := []entry{}
+	for i := range entries {
+		if minDists[i] <= d {
+			pruned = append(pruned, entries[i])
+		}
+	}
+	return pruned
+}
+
 func (tree *Rtree) nearestNeighbor(p Point, n *node, d float64, nearest Spatial) (Spatial, float64) {
 	if n.leaf {
 		for _, e := range n.entries {
@@ -567,7 +577,10 @@ func (tree *Rtree) NearestNeighbors(k int, p Point) []Spatial {
 		objs[i] = nil
 	}
 	objs, _ = tree.nearestNeighbors(k, p, tree.root, dists, objs)
-	return objs
+	var i int
+	for ; i < k && objs[i] != nil; i++ {
+	}
+	return objs[:i]
 }
 
 // insert obj into nearest and return the first k elements in increasing order.
@@ -598,12 +611,19 @@ func insertNearest(k int, dists []float64, nearest []Spatial, dist float64, obj 
 func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, nearest []Spatial) ([]Spatial, []float64) {
 	if n.leaf {
 		for _, e := range n.entries {
-			dist := math.Sqrt(p.minDist(e.bb))
+			dist := p.minDist(e.bb)
 			dists, nearest = insertNearest(k, dists, nearest, dist, e.obj)
 		}
 	} else {
 		branches, branchDists := sortEntries(p, n.entries)
-		branches = pruneEntries(p, branches, branchDists)
+		// only prune if some element in buffer
+		if nearest[0] != nil {
+			// find furthest in buffer
+			var i int
+			for ; i < k && nearest[i] != nil; i++ {
+			}
+			branches = pruneEntriesMinDist(dists[i-1], branches, branchDists)
+		}
 		for _, e := range branches {
 			nearest, dists = tree.nearestNeighbors(k, p, e.child, dists, nearest)
 		}
