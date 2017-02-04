@@ -570,37 +570,36 @@ func (tree *Rtree) nearestNeighbor(p Point, n *node, d float64, nearest Spatial)
 
 // NearestNeighbors gets the closest Spatials to the Point.
 func (tree *Rtree) NearestNeighbors(k int, p Point) []Spatial {
-	dists := make([]float64, k)
-	objs := make([]Spatial, k)
-	for i := 0; i < k; i++ {
-		dists[i] = math.MaxFloat64
-		objs[i] = nil
-	}
+	dists := make([]float64, 0, k)
+	objs := make([]Spatial, 0, k)
 	objs, _ = tree.nearestNeighbors(k, p, tree.root, dists, objs)
-	var i int
-	for ; i < k && objs[i] != nil; i++ {
-	}
-	return objs[:i]
+	return objs
 }
 
 // insert obj into nearest and return the first k elements in increasing order.
 func insertNearest(k int, dists []float64, nearest []Spatial, dist float64, obj Spatial) ([]float64, []Spatial) {
 	i := 0
-	for i < k && dist >= dists[i] {
+	for i < len(nearest) && dist >= dists[i] {
 		i++
 	}
 	if i >= k {
 		return dists, nearest
 	}
 
-	left, right := dists[:i], dists[i:k-1]
-	updatedDists := make([]float64, k)
+	// no resize since cap = k
+	if len(nearest) < k {
+		dists = append(dists, 0)
+		nearest = append(nearest, nil)
+	}
+
+	left, right := dists[:i], dists[i:len(dists)-1]
+	updatedDists := make([]float64, len(dists))
 	copy(updatedDists, left)
 	updatedDists[i] = dist
 	copy(updatedDists[i+1:], right)
 
-	leftObjs, rightObjs := nearest[:i], nearest[i:k-1]
-	updatedNearest := make([]Spatial, k)
+	leftObjs, rightObjs := nearest[:i], nearest[i:len(nearest)-1]
+	updatedNearest := make([]Spatial, len(nearest))
 	copy(updatedNearest, leftObjs)
 	updatedNearest[i] = obj
 	copy(updatedNearest[i+1:], rightObjs)
@@ -617,12 +616,8 @@ func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, ne
 	} else {
 		branches, branchDists := sortEntries(p, n.entries)
 		// only prune if some element in buffer
-		if nearest[0] != nil {
-			// find furthest in buffer
-			var i int
-			for ; i < k && nearest[i] != nil; i++ {
-			}
-			branches = pruneEntriesMinDist(dists[i-1], branches, branchDists)
+		if l := len(dists); l == k {
+			branches = pruneEntriesMinDist(dists[l-1], branches, branchDists)
 		}
 		for _, e := range branches {
 			nearest, dists = tree.nearestNeighbors(k, p, e.child, dists, nearest)
