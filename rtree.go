@@ -577,7 +577,7 @@ func (tree *Rtree) NearestNeighbors(k int, p Point) []Spatial {
 
 // insert obj into nearest and return the first k elements in increasing order.
 func insertNearest(k int, dists []float64, nearest []Spatial, dist float64, obj Spatial) ([]float64, []Spatial) {
-	i := 0
+	i := sort.SearchFloat64s(dists, dist)
 	for i < len(nearest) && dist >= dists[i] {
 		i++
 	}
