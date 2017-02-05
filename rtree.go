@@ -491,7 +491,6 @@ func (tree *Rtree) NearestNeighbor(p Point) Spatial {
 type entrySlice struct {
 	entries []entry
 	dists   []float64
-	pt      Point
 }
 
 func (s entrySlice) Len() int { return len(s.entries) }
@@ -512,7 +511,7 @@ func sortEntries(p Point, entries []entry) ([]entry, []float64) {
 		sorted[i] = entries[i]
 		dists[i] = p.minDist(entries[i].bb)
 	}
-	sort.Sort(entrySlice{sorted, dists, p})
+	sort.Sort(entrySlice{sorted, dists})
 	return sorted, dists
 }
 
@@ -613,8 +612,8 @@ func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, ne
 		}
 	} else {
 		branches, branchDists := sortEntries(p, n.entries)
-		// only prune if some element in buffer
-		if l := len(dists); l == k {
+		// only prune if buffer has k elements
+		if l := len(dists); l >= k {
 			branches = pruneEntriesMinDist(dists[l-1], branches, branchDists)
 		}
 		for _, e := range branches {
