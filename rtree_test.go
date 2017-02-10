@@ -7,8 +7,6 @@ import (
 	"sort"
 	"strings"
 	"testing"
-
-	"github.com/facebookgo/ensure"
 )
 
 type testCase struct {
@@ -716,7 +714,7 @@ func TestDelete(t *testing.T) {
 					t.Errorf("Delete failed to remove %v", thing)
 					return
 				}
-				//				verify(t, rt.root)
+				verify(t, rt.root)
 			}
 		})
 	}
@@ -824,7 +822,8 @@ func TestSearchIntersect(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			rt := tc.tree
 
-			bb := mustRect(Point{2, 1.5}, []float64{10, 5.5})
+			p := Point{2, 1.5}
+			bb := mustRect(p, []float64{10, 5.5})
 			q := rt.SearchIntersect(bb)
 
 			var expected []Spatial
@@ -832,7 +831,7 @@ func TestSearchIntersect(t *testing.T) {
 				expected = append(expected, things[i])
 			}
 
-			ensure.DisorderedSubset(t, q, expected)
+			ensureDisorderedSubset(t, q, expected)
 		})
 	}
 
@@ -870,16 +869,24 @@ func TestSearchIntersectWithLimit(t *testing.T) {
 				q := rt.SearchIntersectWithLimit(k, bb)
 
 				if k == -1 {
-					ensure.DisorderedSubset(t, expected, q)
-					ensure.True(t, len(q) == len(expected))
+					ensureDisorderedSubset(t, q, expected)
+					if len(q) != len(expected) {
+						t.Fatalf("length of actual (%v) was different from expected (%v)", len(q), len(expected))
+					}
 				} else if k == 0 {
-					ensure.True(t, len(q) == 0)
+					if len(q) != 0 {
+						t.Fatalf("length of actual (%v) was different from expected (%v)", len(q), len(expected))
+					}
 				} else if k <= len(expected) {
-					ensure.DisorderedSubset(t, expected, q)
-					ensure.True(t, len(q) == k, len(q))
+					ensureDisorderedSubset(t, q, expected)
+					if len(q) != k {
+						t.Fatalf("length of actual (%v) was different from expected (%v)", len(q), len(expected))
+					}
 				} else {
-					ensure.DisorderedSubset(t, expected, q)
-					ensure.True(t, len(q) == len(expected))
+					ensureDisorderedSubset(t, q, expected)
+					if len(q) != len(expected) {
+						t.Fatalf("length of actual (%v) was different from expected (%v)", len(q), len(expected))
+					}
 				}
 			}
 		})
@@ -923,7 +930,7 @@ func TestSearchIntersectWithTestFilter(t *testing.T) {
 				return true, false
 			})
 
-			ensure.DisorderedSubset(t, objects, expected)
+			ensureDisorderedSubset(t, objects, expected)
 		})
 	}
 }
@@ -1049,6 +1056,40 @@ func TestNearestNeighborsAll(t *testing.T) {
 	}
 }
 
+func TestNearestNeighborsFilters(t *testing.T) {
+	things := []Spatial{
+		mustRect(Point{1, 1}, []float64{1, 1}),
+		mustRect(Point{-7, -7}, []float64{1, 1}),
+		mustRect(Point{1, 3}, []float64{1, 1}),
+		mustRect(Point{7, 7}, []float64{1, 1}),
+		mustRect(Point{10, 2}, []float64{1, 1}),
+		mustRect(Point{3, 3}, []float64{1, 1}),
+	}
+
+	expected := []Spatial{things[0], things[2], things[3]}
+
+	for _, tc := range tests(2, 3, 3, things...) {
+		t.Run(tc.name, func(t *testing.T) {
+			rt := tc.tree
+
+			p := Point{0.5, 0.5}
+			sort.Sort(byMinDist{expected, p})
+
+			objs := rt.NearestNeighbors(len(things), p, func(r []Spatial, obj Spatial) (bool, bool) {
+				for _, ex := range expected {
+					if ex == obj {
+						return false, false
+					}
+				}
+
+				return true, false
+			})
+
+			ensureOrderedSubset(t, objs, expected)
+		})
+	}
+}
+
 func TestNearestNeighborsHalf(t *testing.T) {
 	things := []Spatial{
 		mustRect(Point{1, 1}, []float64{1, 1}),
@@ -1079,4 +1120,30 @@ func TestNearestNeighborsHalf(t *testing.T) {
 			}
 		})
 	}
+}
+
+func ensureOrderedSubset(t *testing.T, actual []Spatial, expected []Spatial) {
+	for i := range actual {
+		if len(expected)-1 < i || actual[i] != expected[i] {
+			t.Fatalf("actual is not an ordered subset of expected")
+		}
+	}
+}
+
+func ensureDisorderedSubset(t *testing.T, actual []Spatial, expected []Spatial) {
+	for _, obj := range actual {
+		if !contains(obj, expected) {
+			t.Fatalf("actual contained an object that was not expected: %+v", obj)
+		}
+	}
+}
+
+func contains(obj Spatial, slice []Spatial) bool {
+	for _, s := range slice {
+		if s == obj {
+			return true
+		}
+	}
+
+	return false
 }

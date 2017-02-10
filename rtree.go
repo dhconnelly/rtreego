@@ -723,21 +723,25 @@ func (tree *Rtree) nearestNeighbor(p Point, n *node, d float64, nearest Spatial)
 }
 
 // NearestNeighbors gets the closest Spatials to the Point.
-func (tree *Rtree) NearestNeighbors(k int, p Point) []Spatial {
+func (tree *Rtree) NearestNeighbors(k int, p Point, filters ...Filter) []Spatial {
 	dists := make([]float64, 0, k)
 	objs := make([]Spatial, 0, k)
-	objs, _ = tree.nearestNeighbors(k, p, tree.root, dists, objs)
+	objs, _, _ = tree.nearestNeighbors(k, p, tree.root, dists, objs, filters)
 	return objs
 }
 
 // insert obj into nearest and return the first k elements in increasing order.
-func insertNearest(k int, dists []float64, nearest []Spatial, dist float64, obj Spatial) ([]float64, []Spatial) {
+func insertNearest(k int, dists []float64, nearest []Spatial, dist float64, obj Spatial, filters []Filter) ([]float64, []Spatial, bool) {
 	i := sort.SearchFloat64s(dists, dist)
 	for i < len(nearest) && dist >= dists[i] {
 		i++
 	}
 	if i >= k {
-		return dists, nearest
+		return dists, nearest, false
+	}
+
+	if refuse, abort := applyFilters(nearest, obj, filters); refuse || abort {
+		return dists, nearest, abort
 	}
 
 	// no resize since cap = k
@@ -756,14 +760,18 @@ func insertNearest(k int, dists []float64, nearest []Spatial, dist float64, obj 
 	copy(nearest[i+1:], rightObjs)
 	nearest[i] = obj
 
-	return dists, nearest
+	return dists, nearest, false
 }
 
-func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, nearest []Spatial) ([]Spatial, []float64) {
+func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, nearest []Spatial, filters []Filter) ([]Spatial, []float64, bool) {
+	var abort bool
 	if n.leaf {
 		for _, e := range n.entries {
 			dist := p.minDist(e.bb)
-			dists, nearest = insertNearest(k, dists, nearest, dist, e.obj)
+			dists, nearest, abort = insertNearest(k, dists, nearest, dist, e.obj, filters)
+			if abort {
+				break
+			}
 		}
 	} else {
 		branches, branchDists := sortEntries(p, n.entries)
@@ -772,8 +780,11 @@ func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, ne
 			branches = pruneEntriesMinDist(dists[l-1], branches, branchDists)
 		}
 		for _, e := range branches {
-			nearest, dists = tree.nearestNeighbors(k, p, e.child, dists, nearest)
+			nearest, dists, abort = tree.nearestNeighbors(k, p, e.child, dists, nearest, filters)
+			if abort {
+				break
+			}
 		}
 	}
-	return nearest, dists
+	return nearest, dists, abort
 }
