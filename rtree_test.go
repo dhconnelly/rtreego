@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -1017,13 +1018,13 @@ func TestGetAllBoundingBox(t *testing.T) {
 	rtbb3 := rt3.GetAllBoundingBox()
 
 	if len(rtbb1) != 3 {
-		t.Errorf("Failed bounding box traversal expected 3 got " + string(len(rtbb1)))
+		t.Errorf("Failed bounding box traversal expected 3 got " + strconv.Itoa(len(rtbb1)))
 	}
 	if len(rtbb2) != 2 {
-		t.Errorf("Failed bounding box traversal expected 3 got " + string(len(rtbb2)))
+		t.Errorf("Failed bounding box traversal expected 2 got " + strconv.Itoa(len(rtbb2)))
 	}
 	if len(rtbb3) != 1 {
-		t.Errorf("Failed bounding box traversal expected 3 got " + string(len(rtbb3)))
+		t.Errorf("Failed bounding box traversal expected 1 got " + strconv.Itoa(len(rtbb3)))
 	}
 }
 
