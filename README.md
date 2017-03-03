@@ -11,7 +11,7 @@ About
 
 The R-tree is a popular data structure for efficiently storing and
 querying spatial objects; one common use is implementing geospatial
-indexes in database management systems.  Both bounding-box queries
+indexes in database management systems. Both bounding-box queries
 and k-nearest-neighbor queries are supported.
 
 R-trees are balanced, so maximum tree height is guaranteed to be
@@ -41,6 +41,11 @@ To create a new tree, specify the number of spatial dimensions and the minimum
 and maximum branching factor:
 
     rt := rtreego.NewTree(2, 25, 50)
+
+You can also bulk-load the tree when creating it by passing the objects as
+a parameter.
+
+    rt := rtreego.NewTree(2, 25, 50, objects...)
 
 Any type that implements the `Spatial` interface can be stored in the tree:
 
