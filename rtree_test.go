@@ -972,6 +972,61 @@ func TestNearestNeighbor(t *testing.T) {
 	}
 }
 
+func TestGetAllBoundingBox(t *testing.T) {
+	rt1 := NewTree(2, 3, 3)
+	rt2 := NewTree(2, 2, 4)
+	rt3 := NewTree(2, 4, 8)
+	things := []*Rect{
+		mustRect(Point{0, 0}, []float64{2, 1}),
+		mustRect(Point{3, 1}, []float64{1, 2}),
+		mustRect(Point{1, 2}, []float64{2, 2}),
+		mustRect(Point{8, 6}, []float64{1, 1}),
+		mustRect(Point{10, 3}, []float64{1, 2}),
+		mustRect(Point{11, 7}, []float64{1, 1}),
+		mustRect(Point{10, 10}, []float64{2, 2}),
+		mustRect(Point{2, 3}, []float64{0.5, 1}),
+		mustRect(Point{3, 5}, []float64{1.5, 2}),
+		mustRect(Point{7, 14}, []float64{2.5, 2}),
+		mustRect(Point{15, 6}, []float64{1, 1}),
+		mustRect(Point{4, 3}, []float64{1, 2}),
+		mustRect(Point{1, 7}, []float64{1, 1}),
+		mustRect(Point{10, 5}, []float64{2, 2}),
+	}
+	for _, thing := range things {
+		rt1.Insert(thing)
+	}
+	for _, thing := range things {
+		rt2.Insert(thing)
+	}
+	for _, thing := range things {
+		rt3.Insert(thing)
+	}
+
+	if rt1.Size() != 14 {
+		t.Errorf("Insert failed to insert")
+	}
+	if rt2.Size() != 14 {
+		t.Errorf("Insert failed to insert")
+	}
+	if rt3.Size() != 14 {
+		t.Errorf("Insert failed to insert")
+	}
+
+	rtbb1 := rt1.GetAllBoundingBox()
+	rtbb2 := rt2.GetAllBoundingBox()
+	rtbb3 := rt3.GetAllBoundingBox()
+
+	if len(rtbb1) != 3 {
+		t.Errorf("Failed bounding box traversal expected 3 got " + string(len(rtbb1)))
+	}
+	if len(rtbb2) != 2 {
+		t.Errorf("Failed bounding box traversal expected 3 got " + string(len(rtbb2)))
+	}
+	if len(rtbb3) != 1 {
+		t.Errorf("Failed bounding box traversal expected 3 got " + string(len(rtbb3)))
+	}
+}
+
 type sortableRects struct {
 	r []*Rect
 	p Point
