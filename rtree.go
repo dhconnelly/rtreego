@@ -407,6 +407,22 @@ func (n *node) split(minGroupSize int) (left, right *node) {
 	return
 }
 
+// getAllBoundingBoxes traverses tree populating slice of bounding boxes of non-leaf nodes.
+func (n *node) getAllBoundingBoxes() []*Rect {
+	var rects []*Rect
+	if n.leaf {
+		return rects
+	}
+	for _, e := range n.entries {
+		if e.child == nil {
+			return rects
+		}
+		rectsInter := append(e.child.getAllBoundingBoxes(), e.bb)
+		rects = append(rects, rectsInter...)
+	}
+	return rects
+}
+
 func assign(e entry, group *node) {
 	if e.child != nil {
 		e.child.parent = group
@@ -639,6 +655,16 @@ func (tree *Rtree) searchIntersect(results []Spatial, n *node, bb *Rect, filters
 func (tree *Rtree) NearestNeighbor(p Point) Spatial {
 	obj, _ := tree.nearestNeighbor(p, tree.root, math.MaxFloat64, nil)
 	return obj
+}
+
+// GetAllBoundingBoxes returning slice of bounding boxes by traversing tree. Slice
+// includes bounding boxes from all non-leaf nodes.
+func (tree *Rtree) GetAllBoundingBoxes() []*Rect {
+	var rects []*Rect
+	if tree.root != nil {
+		rects = tree.root.getAllBoundingBoxes()
+	}
+	return rects
 }
 
 // utilities for sorting slices of entries
