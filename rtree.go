@@ -696,6 +696,19 @@ func sortEntries(p Point, entries []entry) ([]entry, []float64) {
 	return sorted, dists
 }
 
+func sortPreallocEntries(p Point, entries, sorted []entry, dists []float64) ([]entry, []float64) {
+	// use preallocated slices
+	sorted = sorted[:len(entries)]
+	dists = dists[:len(entries)]
+
+	for i := 0; i < len(entries); i++ {
+		sorted[i] = entries[i]
+		dists[i] = p.minDist(entries[i].bb)
+	}
+	sort.Sort(entrySlice{sorted, dists})
+	return sorted, dists
+}
+
 func pruneEntries(p Point, entries []entry, minDists []float64) []entry {
 	minMinMaxDist := math.MaxFloat64
 	for i := range entries {
@@ -750,9 +763,17 @@ func (tree *Rtree) nearestNeighbor(p Point, n *node, d float64, nearest Spatial)
 
 // NearestNeighbors gets the closest Spatials to the Point.
 func (tree *Rtree) NearestNeighbors(k int, p Point, filters ...Filter) []Spatial {
+	// preallocate the buffers for sortings the branches. At each level of the
+	// tree, we slide the buffer by the number of entries in the node.
+	maxBufSize := tree.MaxChildren * tree.Depth()
+	branches := make([]entry, maxBufSize)
+	branchDists := make([]float64, maxBufSize)
+
+	// allocate the buffers for the results
 	dists := make([]float64, 0, k)
 	objs := make([]Spatial, 0, k)
-	objs, _, _ = tree.nearestNeighbors(k, p, tree.root, dists, objs, filters)
+
+	objs, _, _ = tree.nearestNeighbors(k, p, tree.root, dists, objs, filters, branches, branchDists)
 	return objs
 }
 
@@ -789,7 +810,7 @@ func insertNearest(k int, dists []float64, nearest []Spatial, dist float64, obj 
 	return dists, nearest, false
 }
 
-func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, nearest []Spatial, filters []Filter) ([]Spatial, []float64, bool) {
+func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, nearest []Spatial, filters []Filter, b []entry, bd []float64) ([]Spatial, []float64, bool) {
 	var abort bool
 	if n.leaf {
 		for _, e := range n.entries {
@@ -800,13 +821,13 @@ func (tree *Rtree) nearestNeighbors(k int, p Point, n *node, dists []float64, ne
 			}
 		}
 	} else {
-		branches, branchDists := sortEntries(p, n.entries)
+		branches, branchDists := sortPreallocEntries(p, n.entries, b, bd)
 		// only prune if buffer has k elements
 		if l := len(dists); l >= k {
 			branches = pruneEntriesMinDist(dists[l-1], branches, branchDists)
 		}
 		for _, e := range branches {
-			nearest, dists, abort = tree.nearestNeighbors(k, p, e.child, dists, nearest, filters)
+			nearest, dists, abort = tree.nearestNeighbors(k, p, e.child, dists, nearest, filters, b[len(n.entries):], bd[len(n.entries):])
 			if abort {
 				break
 			}

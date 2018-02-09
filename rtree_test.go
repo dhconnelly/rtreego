@@ -1108,6 +1108,10 @@ func TestNearestNeighborsAll(t *testing.T) {
 			if len(objs) > len(things) {
 				t.Errorf("NearestNeighbors failed: too many elements")
 			}
+			if len(objs) < len(things) {
+				t.Errorf("NearestNeighbors failed: not enough elements")
+			}
+
 		})
 	}
 }
