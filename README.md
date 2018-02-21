@@ -159,7 +159,7 @@ query point.
     k := 5
 
     // Get a slice of the k objects in rt closest to q:
-    results = rt.SearchNearestNeighbors(q, k)
+    results = rt.NearestNeighbors(k, q)
 
 ### More information
 
