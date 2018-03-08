@@ -11,8 +11,8 @@ import (
 )
 
 type testCase struct {
-	name string
-	tree *Rtree
+	name  string
+	build func() *Rtree
 }
 
 func tests(dim, min, max int, objs ...Spatial) []*testCase {
@@ -25,13 +25,13 @@ func tests(dim, min, max int, objs ...Spatial) []*testCase {
 					rt.Insert(thing)
 				}
 				return rt
-			}(),
+			},
 		},
 		{
 			"bulk-loaded",
 			func() *Rtree {
 				return NewTree(dim, min, max, objs...)
-			}(),
+			},
 		},
 	}
 }
@@ -87,18 +87,41 @@ func items(n *node) chan Spatial {
 	return ch
 }
 
-func verify(t *testing.T, n *node) {
+func validate(n *node, height, max int) error {
+	if n.level != height {
+		return fmt.Errorf("level %d != height %d", n.level, height)
+	}
+	if len(n.entries) > max {
+		return fmt.Errorf("node with too many entries at level %d/%d (actual: %d max: %d)", n.level, height, len(n.entries), max)
+	}
 	if n.leaf {
-		return
+		if n.level != 1 {
+			return fmt.Errorf("leaf node at level %d", n.level)
+		}
+		return nil
 	}
 	for _, e := range n.entries {
 		if e.child.level != n.level-1 {
-			t.Errorf("failed to preserve level order")
+			return fmt.Errorf("failed to preserve level order")
 		}
 		if e.child.parent != n {
-			t.Errorf("failed to update parent pointer")
+			return fmt.Errorf("failed to update parent pointer")
 		}
-		verify(t, e.child)
+		if err := validate(e.child, height-1, max); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func verify(t *testing.T, rt *Rtree) {
+	if rt.height != rt.root.level {
+		t.Errorf("invalid tree: height %d differs root level %d", rt.height, rt.root.level)
+	}
+
+	if err := validate(rt.root, rt.height, rt.MaxChildren); err != nil {
+		printNode(rt.root, 0)
+		t.Errorf("invalid tree: %v", err)
 	}
 }
 
@@ -382,7 +405,7 @@ func TestInsertRepeated(t *testing.T) {
 
 	for _, tc := range tests(2, 3, 5, things...) {
 		t.Run(tc.name, func(t *testing.T) {
-			rt := tc.tree
+			rt := tc.build()
 			rt.Insert(mustRect(Point{0, 0}, []float64{2, 1}))
 		})
 	}
@@ -508,6 +531,38 @@ func TestInsertSplitSecondLevel(t *testing.T) {
 	checkParents(rt.root)
 }
 
+func TestBulkLoadingValidity(t *testing.T) {
+	var things []Spatial
+	for i := float64(0); i < float64(100); i++ {
+		things = append(things, mustRect(Point{i, i}, []float64{1, 1}))
+	}
+
+	testCases := []struct {
+		count int
+		max   int
+	}{
+		{
+			count: 5,
+			max:   2,
+		},
+		{
+			count: 33,
+			max:   5,
+		},
+		{
+			count: 34,
+			max:   7,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("count=%d-max=%d", tc.count, tc.max), func(t *testing.T) {
+			rt := NewTree(2, 1, tc.max, things[:tc.count]...)
+			verify(t, rt)
+		})
+	}
+}
+
 func TestFindLeaf(t *testing.T) {
 	rt := NewTree(2, 3, 3)
 	things := []*Rect{
@@ -525,7 +580,7 @@ func TestFindLeaf(t *testing.T) {
 	for _, thing := range things {
 		rt.Insert(thing)
 	}
-	verify(t, rt.root)
+	verify(t, rt)
 	for _, thing := range things {
 		leaf := rt.findLeaf(rt.root, thing, defaultComparator)
 		if leaf == nil {
@@ -604,7 +659,7 @@ func TestCondenseTreeEliminate(t *testing.T) {
 		t.Errorf("condenseTree failed to reinsert upstream elements")
 	}
 
-	verify(t, rt.root)
+	verify(t, rt)
 }
 
 func TestChooseNodeNonLeaf(t *testing.T) {
@@ -669,10 +724,10 @@ func TestDeleteFlatten(t *testing.T) {
 
 	for _, tc := range tests(2, 3, 3, things...) {
 		t.Run(tc.name, func(t *testing.T) {
-			rt := tc.tree
+			rt := tc.build()
 			// make sure flattening didn't nuke the tree
 			rt.Delete(things[0])
-			verify(t, rt.root)
+			verify(t, rt)
 		})
 	}
 }
@@ -693,9 +748,9 @@ func TestDelete(t *testing.T) {
 
 	for _, tc := range tests(2, 3, 3, things...) {
 		t.Run(tc.name, func(t *testing.T) {
-			rt := tc.tree
+			rt := tc.build()
 
-			verify(t, rt.root)
+			verify(t, rt)
 
 			things2 := []Spatial{}
 			for len(things) > 0 {
@@ -715,7 +770,7 @@ func TestDelete(t *testing.T) {
 					t.Errorf("Delete failed to remove %v", thing)
 					return
 				}
-				verify(t, rt.root)
+				verify(t, rt)
 			}
 		})
 	}
@@ -740,7 +795,7 @@ func TestDeleteWithDepthChange(t *testing.T) {
 	rt.Insert(things[3])
 
 	// and verify would fail
-	verify(t, rt.root)
+	verify(t, rt)
 }
 
 func TestDeleteWithComparator(t *testing.T) {
@@ -764,9 +819,9 @@ func TestDeleteWithComparator(t *testing.T) {
 
 	for _, tc := range tests(2, 3, 3, things...) {
 		t.Run(tc.name, func(t *testing.T) {
-			rt := tc.tree
+			rt := tc.build()
 
-			verify(t, rt.root)
+			verify(t, rt)
 
 			cmp := func(obj1, obj2 Spatial) bool {
 				idr1 := obj1.(*IDRect)
@@ -799,7 +854,7 @@ func TestDeleteWithComparator(t *testing.T) {
 					t.Errorf("Delete failed to remove %v", thing)
 					return
 				}
-				verify(t, rt.root)
+				verify(t, rt)
 			}
 		})
 	}
@@ -821,7 +876,7 @@ func TestSearchIntersect(t *testing.T) {
 
 	for _, tc := range tests(2, 3, 3, things...) {
 		t.Run(tc.name, func(t *testing.T) {
-			rt := tc.tree
+			rt := tc.build()
 
 			p := Point{2, 1.5}
 			bb := mustRect(p, []float64{10, 5.5})
@@ -854,7 +909,7 @@ func TestSearchIntersectWithLimit(t *testing.T) {
 
 	for _, tc := range tests(2, 3, 3, things...) {
 		t.Run(tc.name, func(t *testing.T) {
-			rt := tc.tree
+			rt := tc.build()
 
 			bb := mustRect(Point{2, 1.5}, []float64{10, 5.5})
 
@@ -910,7 +965,7 @@ func TestSearchIntersectWithTestFilter(t *testing.T) {
 
 	for _, tc := range tests(2, 3, 3, things...) {
 		t.Run(tc.name, func(t *testing.T) {
-			rt := tc.tree
+			rt := tc.build()
 
 			bb := mustRect(Point{2, 1.5}, []float64{10, 5.5})
 
@@ -952,7 +1007,7 @@ func TestSearchIntersectNoResults(t *testing.T) {
 
 	for _, tc := range tests(2, 3, 3, things...) {
 		t.Run(tc.name, func(t *testing.T) {
-			rt := tc.tree
+			rt := tc.build()
 
 			bb := mustRect(Point{99, 99}, []float64{10, 5.5})
 			q := rt.SearchIntersect(bb)
@@ -994,7 +1049,7 @@ func TestNearestNeighbor(t *testing.T) {
 
 	for _, tc := range tests(2, 3, 3, things...) {
 		t.Run(tc.name, func(t *testing.T) {
-			rt := tc.tree
+			rt := tc.build()
 
 			obj1 := rt.NearestNeighbor(Point{0.5, 0.5})
 			obj2 := rt.NearestNeighbor(Point{1.5, 4.5})
@@ -1089,10 +1144,11 @@ func TestNearestNeighborsAll(t *testing.T) {
 		mustRect(Point{10, 2}, []float64{1, 1}),
 		mustRect(Point{3, 3}, []float64{1, 1}),
 	}
-
 	for _, tc := range tests(2, 3, 3, things...) {
 		t.Run(tc.name, func(t *testing.T) {
-			rt := tc.tree
+			rt := tc.build()
+
+			verify(t, rt)
 
 			p := Point{0.5, 0.5}
 			sort.Sort(byMinDist{things, p})
@@ -1108,6 +1164,10 @@ func TestNearestNeighborsAll(t *testing.T) {
 			if len(objs) > len(things) {
 				t.Errorf("NearestNeighbors failed: too many elements")
 			}
+			if len(objs) < len(things) {
+				t.Errorf("NearestNeighbors failed: not enough elements")
+			}
+
 		})
 	}
 }
@@ -1126,7 +1186,7 @@ func TestNearestNeighborsFilters(t *testing.T) {
 
 	for _, tc := range tests(2, 3, 3, things...) {
 		t.Run(tc.name, func(t *testing.T) {
-			rt := tc.tree
+			rt := tc.build()
 
 			p := Point{0.5, 0.5}
 			sort.Sort(byMinDist{expected, p})
@@ -1161,7 +1221,7 @@ func TestNearestNeighborsHalf(t *testing.T) {
 
 	for _, tc := range tests(2, 3, 3, things...) {
 		t.Run(tc.name, func(t *testing.T) {
-			rt := tc.tree
+			rt := tc.build()
 
 			objs := rt.NearestNeighbors(3, p)
 			for i := range objs {
