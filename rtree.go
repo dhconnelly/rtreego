@@ -688,12 +688,7 @@ func (s entrySlice) Less(i, j int) bool {
 func sortEntries(p Point, entries []entry) ([]entry, []float64) {
 	sorted := make([]entry, len(entries))
 	dists := make([]float64, len(entries))
-	for i := 0; i < len(entries); i++ {
-		sorted[i] = entries[i]
-		dists[i] = p.minDist(entries[i].bb)
-	}
-	sort.Sort(entrySlice{sorted, dists})
-	return sorted, dists
+	return sortPreallocEntries(p, entries, sorted, dists)
 }
 
 func sortPreallocEntries(p Point, entries, sorted []entry, dists []float64) ([]entry, []float64) {
