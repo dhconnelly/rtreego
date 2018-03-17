@@ -90,10 +90,7 @@ func (s *dimSorter) Less(i, j int) bool {
 
 // split splits objects into slices of maximum k elements.
 func split(k int, objs []entry) [][]entry {
-	n := len(objs) / k
-	if len(objs)%k != 0 {
-		n++
-	}
+	n := (len(objs) + k - 1) / k
 
 	splits := make([][]entry, n)
 	for i := 0; i < n; i++ {
@@ -146,10 +143,10 @@ func (tree *Rtree) bulkLoad(objs []Spatial) {
 	S := math.Floor(math.Sqrt(s))
 
 	// sort all entries by first dimension
-	sortByDim(int(h)%tree.Dim, entries)
-	tree.root = tree.omt(int(h), int(S), entries, int(s))
-	tree.size = n
+	sortByDim(0, entries)
 	tree.height = int(h)
+	tree.size = n
+	tree.root = tree.omt(int(h), int(S), entries, int(s))
 }
 
 // omt is the recursive part of the Overlap Minimizing Top-loading bulk-
@@ -204,7 +201,7 @@ func (tree *Rtree) omt(level, nSlices int, objs []entry, m int) *node {
 	// create sub trees
 	for _, vert := range slices {
 		// sort vertical slice by a different dimension on every level
-		sortByDim((level-1)%tree.Dim, vert)
+		sortByDim((tree.height-level)%tree.Dim, vert)
 
 		// split slice into groups of size k
 		for _, part := range split(int(k), vert) {
