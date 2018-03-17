@@ -88,21 +88,18 @@ func (s *dimSorter) Less(i, j int) bool {
 	return s.objs[i].bb.p[s.dim] < s.objs[j].bb.p[s.dim]
 }
 
-// split splits objects into slices of maximum k elements.
-func split(k int, objs []entry) [][]entry {
+// walkPartitions splits objs into slices of maximum k elements and
+// iterates over these partitions.
+func walkPartitions(k int, objs []entry, iter func(parts []entry)) {
 	n := (len(objs) + k - 1) / k
 
-	splits := make([][]entry, n)
-	for i := 0; i < n; i++ {
-		if i == n-1 {
-			splits[i] = objs[i*k:]
-			break
-		}
-
-		splits[i] = objs[i*k : (i+1)*k]
+	for i := 1; i < n; i++ {
+		iter(objs[(i-1)*k : i*k])
 	}
 
-	return splits
+	if objs = objs[(n-1)*k:]; len(objs) != 0 {
+		iter(objs)
+	}
 }
 
 func sortByDim(dim int, objs []entry) {
@@ -144,6 +141,7 @@ func (tree *Rtree) bulkLoad(objs []Spatial) {
 
 	// sort all entries by first dimension
 	sortByDim(0, entries)
+
 	tree.height = int(h)
 	tree.size = n
 	tree.root = tree.omt(int(h), int(S), entries, int(s))
@@ -175,36 +173,28 @@ func (tree *Rtree) omt(level, nSlices int, objs []entry, m int) *node {
 		}
 	}
 
-	var (
-		n = &node{
-			level:   level,
-			entries: make([]entry, 0, m),
-		}
-
-		N = float64(len(objs))
-		M = float64(m)
-	)
+	n := &node{
+		level:   level,
+		entries: make([]entry, 0, m),
+	}
 
 	// maximum node size given at most M nodes at this level
-	k := math.Ceil(N / M)
+	k := (len(objs) + m - 1) / m // = ceil(N / M)
 
 	// In the root level, split objs in nSlices. In all other levels,
 	// we use a single slice.
-	var slices [][]entry
+	vertSize := len(objs)
 	if nSlices > 1 {
-		minSliceSize := nSlices * int(k)
-		slices = split(minSliceSize, objs)
-	} else {
-		slices = [][]entry{objs}
+		vertSize = nSlices * k
 	}
 
 	// create sub trees
-	for _, vert := range slices {
+	walkPartitions(vertSize, objs, func(vert []entry) {
 		// sort vertical slice by a different dimension on every level
-		sortByDim((tree.height-level)%tree.Dim, vert)
+		sortByDim((tree.height-level+1)%tree.Dim, vert)
 
 		// split slice into groups of size k
-		for _, part := range split(int(k), vert) {
+		walkPartitions(k, vert, func(part []entry) {
 			child := tree.omt(level-1, 1, part, tree.MaxChildren)
 			child.parent = n
 
@@ -212,8 +202,8 @@ func (tree *Rtree) omt(level, nSlices int, objs []entry, m int) *node {
 				bb:    child.computeBoundingBox(),
 				child: child,
 			})
-		}
-	}
+		})
+	})
 	return n
 }
 
