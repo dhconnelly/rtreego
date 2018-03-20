@@ -91,15 +91,12 @@ func (s *dimSorter) Less(i, j int) bool {
 // walkPartitions splits objs into slices of maximum k elements and
 // iterates over these partitions.
 func walkPartitions(k int, objs []entry, iter func(parts []entry)) {
-	n := (len(objs) + k - 1) / k // ceil(len(objs)/ k)
+	n := (len(objs) + k - 1) / k // ceil(len(objs) / k)
 
 	for i := 1; i < n; i++ {
 		iter(objs[(i-1)*k : i*k])
 	}
-
-	if objs = objs[(n-1)*k:]; len(objs) != 0 {
-		iter(objs)
-	}
+	iter(objs[(n-1)*k:])
 }
 
 func sortByDim(dim int, objs []entry) {
