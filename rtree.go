@@ -271,8 +271,8 @@ func (tree *Rtree) insert(e entry, level int) {
 			parent: nil,
 			level:  tree.height,
 			entries: []entry{
-				entry{bb: oldRoot.computeBoundingBox(), child: oldRoot},
-				entry{bb: splitRoot.computeBoundingBox(), child: splitRoot},
+				{bb: oldRoot.computeBoundingBox(), child: oldRoot},
+				{bb: splitRoot.computeBoundingBox(), child: splitRoot},
 			},
 		}
 		oldRoot.parent = tree.root

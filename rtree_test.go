@@ -325,7 +325,7 @@ func TestAdjustTreeNoPreviousSplit(t *testing.T) {
 	r10 := entry{bb: mustRect(Point{1, 0}, []float64{1, 1})}
 	entries := []entry{r00, r01, r10}
 	n := node{rt.root, false, entries, 1}
-	rt.root.entries = []entry{entry{bb: Point{0, 0}.ToRect(0), child: &n}}
+	rt.root.entries = []entry{{bb: Point{0, 0}.ToRect(0), child: &n}}
 
 	rt.adjustTree(&n, nil)
 
@@ -1024,9 +1024,9 @@ func TestSortEntries(t *testing.T) {
 		mustRect(Point{2, 2}, []float64{1, 1}),
 		mustRect(Point{3, 3}, []float64{1, 1})}
 	entries := []entry{
-		entry{objs[2], nil, objs[2]},
-		entry{objs[1], nil, objs[1]},
-		entry{objs[0], nil, objs[0]},
+		{objs[2], nil, objs[2]},
+		{objs[1], nil, objs[1]},
+		{objs[0], nil, objs[0]},
 	}
 	sorted, dists := sortEntries(Point{0, 0}, entries)
 	if sorted[0] != entries[2] || sorted[1] != entries[1] || sorted[2] != entries[0] {
