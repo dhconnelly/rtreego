@@ -248,7 +248,7 @@ func (r *Rect) containsRect(r2 *Rect) bool {
 
 // intersect computes the intersection of two rectangles.  If no intersection
 // exists, the intersection is nil.
-func intersect(r1, r2 *Rect) *Rect {
+func intersect(r1, r2 *Rect) bool {
 	dim := len(r1.p)
 	if len(r2.p) != dim {
 		panic(DimError{dim, len(r2.p)})
@@ -283,17 +283,13 @@ func intersect(r1, r2 *Rect) *Rect {
 	// Enforced by constructor: a1 <= b1 and a2 <= b2.  So we can just
 	// check the endpoints.
 
-	p := make([]float64, dim)
-	q := make([]float64, dim)
-	for i := range p {
+	for i := range r1.p {
 		a1, b1, a2, b2 := r1.p[i], r1.q[i], r2.p[i], r2.q[i]
 		if b2 <= a1 || b1 <= a2 {
-			return nil
+			return false
 		}
-		p[i] = math.Max(a1, a2)
-		q[i] = math.Min(b1, b2)
 	}
-	return &Rect{p, q}
+	return true
 }
 
 // ToRect constructs a rectangle containing p with side lengths 2*tol.
