@@ -623,7 +623,7 @@ func (tree *Rtree) SearchIntersectWithLimit(k int, bb *Rect) []Spatial {
 
 func (tree *Rtree) searchIntersect(results []Spatial, n *node, bb *Rect, filters []Filter) []Spatial {
 	for _, e := range n.entries {
-		if intersect(e.bb, bb) == nil {
+		if !intersect(e.bb, bb) {
 			continue
 		}
 
