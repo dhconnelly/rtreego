@@ -104,9 +104,9 @@ func TestRectSize(t *testing.T) {
 	lengths := []float64{2.5, 8.0, 1.5}
 	rect, _ := NewRect(p, lengths)
 	size := lengths[0] * lengths[1] * lengths[2]
-	actual := rect.size()
+	actual := rect.Size()
 	if size != actual {
-		t.Errorf("Expected %v.size() == %v, got %v", rect, size, actual)
+		t.Errorf("Expected %v.Size() == %v, got %v", rect, size, actual)
 	}
 }
 

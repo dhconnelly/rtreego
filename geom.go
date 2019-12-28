@@ -182,8 +182,8 @@ func NewRect(p Point, lengths []float64) (r *Rect, err error) {
 	return
 }
 
-// size computes the measure of a rectangle (the product of its side lengths).
-func (r *Rect) size() float64 {
+// Size computes the measure of a rectangle (the product of its side lengths).
+func (r *Rect) Size() float64 {
 	size := 1.0
 	for i, a := range r.p {
 		b := r.q[i]
