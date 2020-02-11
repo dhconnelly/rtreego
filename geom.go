@@ -182,6 +182,20 @@ func NewRect(p Point, lengths []float64) (r *Rect, err error) {
 	return
 }
 
+// NewRectFromPoints constructs and returns a pointer to a Rect given a corner points.
+func NewRectFromPoints(minPoint, maxPoint Point) (r *Rect, err error) {
+	if len(minPoint) != len(maxPoint) {
+		err = &DimError{len(minPoint), len(maxPoint)}
+		return
+	}
+
+	r = new(Rect)
+	r.p = minPoint
+	r.q = maxPoint
+
+	return
+}
+
 // Size computes the measure of a rectangle (the product of its side lengths).
 func (r *Rect) Size() float64 {
 	size := 1.0
