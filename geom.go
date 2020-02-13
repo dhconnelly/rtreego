@@ -189,10 +189,7 @@ func NewRectFromPoints(minPoint, maxPoint Point) (r *Rect, err error) {
 		return
 	}
 
-	r = new(Rect)
-	r.p = minPoint
-	r.q = maxPoint
-
+	r = &Rect{p: minPoint, q: maxPoint}
 	return
 }
 
