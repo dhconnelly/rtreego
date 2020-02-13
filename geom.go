@@ -189,6 +189,14 @@ func NewRectFromPoints(minPoint, maxPoint Point) (r *Rect, err error) {
 		return
 	}
 
+	//checking that  min and max points is swapping
+	for i, p := range minPoint {
+		if minPoint[i] > maxPoint[i] {
+			minPoint[i] = maxPoint[i]
+			maxPoint[i] = p
+		}
+	}
+
 	r = &Rect{p: minPoint, q: maxPoint}
 	return
 }
