@@ -37,6 +37,40 @@ func TestNewRect(t *testing.T) {
 	}
 }
 
+func TestNewRectFromPoints(t *testing.T) {
+	p := Point{1.0, -2.5, 3.0}
+	q := Point{3.5, 5.5, 4.5}
+
+	rect, err := NewRectFromPoints(p, q)
+	if err != nil {
+		t.Errorf("Error on NewRect(%v, %v): %v", p, q, err)
+	}
+	if d := p.dist(rect.p); d > EPS {
+		t.Errorf("Expected p == rect.p")
+	}
+	if d := q.dist(rect.q); d > EPS {
+		t.Errorf("Expected q == rect.q")
+	}
+}
+
+func TestNewRectFromPointsWithSwapPoints(t *testing.T) {
+	p := Point{1.0, -2.5, 3.0}
+	q := Point{3.5, 5.5, 4.5}
+
+	rect, err := NewRectFromPoints(q, p)
+	if err != nil {
+		t.Errorf("Error on NewRect(%v, %v): %v", p, q, err)
+	}
+
+	// we must swap p and q because in function it was swapped
+	if d := p.dist(rect.q); d > EPS {
+		t.Errorf("Expected p == rect.p")
+	}
+	if d := q.dist(rect.p); d > EPS {
+		t.Errorf("Expected q == rect.q")
+	}
+}
+
 func TestNewRectDimMismatch(t *testing.T) {
 	p := Point{-7.0, 10.0}
 	lengths := []float64{2.5, 8.0, 1.5}
