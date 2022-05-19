@@ -41,34 +41,34 @@ Documentation
 
 To create a new tree, specify the number of spatial dimensions and the minimum
 and maximum branching factor:
-
+```Go
     rt := rtreego.NewTree(2, 25, 50)
-
+```
 You can also bulk-load the tree when creating it by passing the objects as
 a parameter.
-
+```Go
     rt := rtreego.NewTree(2, 25, 50, objects...)
-
+```
 Any type that implements the `Spatial` interface can be stored in the tree:
-
+```Go
     type Spatial interface {
       Bounds() *Rect
     }
-
+```
 `Rect`s are data structures for representing spatial objects, while `Point`s
 represent spatial locations.  Creating `Point`s is easy--they're just slices
 of `float64`s:
-
+```Go
     p1 := rtreego.Point{0.4, 0.5}
     p2 := rtreego.Point{6.2, -3.4}
-
+```
 To create a `Rect`, specify a location and the lengths of the sides:
-
+```Go
     r1, _ := rtreego.NewRect(p1, []float64{1, 2})
     r2, _ := rtreego.NewRect(p2, []float64{1.7, 2.7})
-
+```
 To demonstrate, let's create and store some test data.
-
+```Go
     type Thing struct {
       where *Rect
       name string
@@ -82,21 +82,21 @@ To demonstrate, let's create and store some test data.
     rt.Insert(&Thing{r2, "bar"})
 
     size := rt.Size() // returns 2
-
+```
 We can insert and delete objects from the tree in any order.
-
+```Go
     rt.Delete(thing2)
     // do some stuff...
     rt.Insert(anotherThing)
-
+```
 Note that ```Delete``` function does the equality comparison by comparing the
 memory addresses of the objects. If you do not have a pointer to the original
 object anymore, you can define a custom comparator.
-
+```Go
     type Comparator func(obj1, obj2 Spatial) (equal bool)
-
+```
 You can use a custom comparator with ```DeleteWithComparator``` function.
-
+```Go
     cmp := func(obj1, obj2 Spatial) bool {
       sp1 := obj1.(*IDRect)
       sp2 := obj2.(*IDRect)
@@ -105,10 +105,10 @@ You can use a custom comparator with ```DeleteWithComparator``` function.
     }
 
     rt.DeleteWithComparator(obj, cmp)
-
+```
 If you want to store points instead of rectangles, you can easily convert a
 point into a rectangle using the `ToRect` method:
-
+```Go
     var tol = 0.01
 
     type Somewhere struct {
@@ -124,7 +124,7 @@ point into a rectangle using the `ToRect` method:
     }
 
     rt.Insert(&Somewhere{rtreego.Point{0, 0}, "Someplace", nil})
-
+```
 If you want to update the location of an object, you must delete it, update it,
 and re-insert.  Just modifying the object so that the `*Rect` returned by
 `Location()` changes, without deleting and re-inserting the object, will
@@ -136,33 +136,33 @@ Bounding-box and k-nearest-neighbors queries are supported.
 
 Bounding-box queries require a search `*Rect`. It returns all objects that
 touch the search rectangle.
-
+```Go
     bb, _ := rtreego.NewRect(rtreego.Point{1.7, -3.4}, []float64{3.2, 1.9})
 
     // Get a slice of the objects in rt that intersect bb:
     results := rt.SearchIntersect(bb)
-
+```
 ### Filters
 
 You can filter out values during searches by implementing Filter functions.
-
+```Go
     type Filter func(results []Spatial, object Spatial) (refuse, abort bool)
-
+```
 A filter for limiting results by result count is included in the package for
 backwards compatibility.
-
+```Go
     // maximum of three results will be returned
     tree.SearchIntersect(bb, LimitFilter(3))
-
+```
 Nearest-neighbor queries find the objects in a tree closest to a specified
 query point.
-
+```Go
     q := rtreego.Point{6.5, -2.47}
     k := 5
 
     // Get a slice of the k objects in rt closest to q:
     results = rt.NearestNeighbors(k, q)
-
+```
 ### More information
 
 See [GoDoc](http://godoc.org/github.com/dhconnelly/rtreego) for full API
