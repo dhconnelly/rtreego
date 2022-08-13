@@ -860,6 +860,28 @@ func TestDeleteWithComparator(t *testing.T) {
 	}
 }
 
+func TestDeleteThenInsert(t *testing.T) {
+	tol := 1e-3
+	things := []Spatial{
+		mustRect(Point{3, 1}, []float64{tol, tol}),
+		mustRect(Point{1, 2}, []float64{tol, tol}),
+		mustRect(Point{2, 6}, []float64{tol, tol}),
+		mustRect(Point{3, 6}, []float64{tol, tol}),
+		mustRect(Point{2, 8}, []float64{tol, tol}),
+	}
+	rt := NewTree(2, 2, 2, things...)
+
+	if ok := rt.Delete(things[3]); !ok {
+		t.Fatalf("%#v", things[3])
+	}
+	rt.Insert(things[3])
+
+	// Deleting and then inserting things[3] should not affect things[4].
+	if ok := rt.Delete(things[4]); !ok {
+		t.Fatalf("%#v", things[4])
+	}
+}
+
 func TestSearchIntersect(t *testing.T) {
 	things := []Spatial{
 		mustRect(Point{0, 0}, []float64{2, 1}),
