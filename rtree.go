@@ -592,7 +592,8 @@ func (tree *Rtree) condenseTree(n *node) {
 		n = n.parent
 	}
 
-	for _, n := range deleted {
+	for i := len(deleted) - 1; i >= 0; i-- {
+		n := deleted[i]
 		// reinsert entry so that it will remain at the same level as before
 		e := entry{n.computeBoundingBox(), n, nil}
 		tree.insert(e, n.level+1)
