@@ -163,9 +163,11 @@ func (tree *Rtree) omt(level, nSlices int, objs []entry, m int) *node {
 			child.parent = n
 			return n
 		}
+		entries := make([]entry, len(objs))
+		copy(entries, objs)
 		return &node{
 			leaf:    true,
-			entries: objs,
+			entries: entries,
 			level:   level,
 		}
 	}
