@@ -739,9 +739,20 @@ func (tree *Rtree) nearestNeighbor(p Point, n *node, d float64, nearest Spatial)
 			}
 		}
 	} else {
-		branches, dists := sortEntries(p, n.entries)
-		branches = pruneEntries(p, branches, dists)
-		for _, e := range branches {
+		minMinMaxDist := math.MaxFloat64
+		for _, e := range n.entries {
+			minMaxDist := p.minMaxDist(e.bb)
+			if minMaxDist < minMinMaxDist {
+				minMinMaxDist = minMaxDist
+			}
+		}
+
+		for _, e := range n.entries {
+			minDist := p.minDist(e.bb)
+			if minDist > minMinMaxDist {
+				continue
+			}
+
 			subNearest, dist := tree.nearestNeighbor(p, e.child, d, nearest)
 			if dist < d {
 				d = dist
