@@ -739,6 +739,14 @@ func (tree *Rtree) nearestNeighbor(p Point, n *node, d float64, nearest Spatial)
 			}
 		}
 	} else {
+		// Search only through entries with minDist <= minMinMaxDist,
+		// where minDist is the distance between a point and a rectangle,
+		// and minMaxDist is the smallest value among the maximum distance across all axes.
+		//
+		// Entries with minDist > minMinMaxDist are guaranteed to be farther away than some other entry.
+		//
+		// For more details, please consult
+		// N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
 		minMinMaxDist := math.MaxFloat64
 		for _, e := range n.entries {
 			minMaxDist := p.minMaxDist(e.bb)
