@@ -165,7 +165,6 @@ func (r Rect) String() string {
 // the lengths of each dimension.  The point p should be the most-negative point
 // on the rectangle (in every dimension) and every length should be positive.
 func NewRect(p Point, lengths []float64) (r Rect, err error) {
-	// r = new(Rect)
 	r.p = p
 	if len(p) != len(lengths) {
 		err = &DimError{len(p), len(lengths)}
@@ -324,7 +323,6 @@ func (p Point) ToRect(tol float64) Rect {
 
 // boundingBox constructs the smallest rectangle containing both r1 and r2.
 func boundingBox(r1, r2 Rect) (bb Rect) {
-	// bb = new(Rect)
 	dim := len(r1.p)
 	bb.p = make([]float64, dim)
 	bb.q = make([]float64, dim)
