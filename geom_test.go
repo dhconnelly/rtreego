@@ -360,7 +360,7 @@ func TestMinDistZero(t *testing.T) {
 
 func TestMinDistPositive(t *testing.T) {
 	p := Point{1, 2, 3}
-	r := &Rect{Point{-1, -4, 7}, Point{2, -2, 9}}
+	r := Rect{Point{-1, -4, 7}, Point{2, -2, 9}}
 	expected := float64((-2-2)*(-2-2) + (7-3)*(7-3))
 	if d := p.minDist(r); math.Abs(d-expected) > EPS {
 		t.Errorf("Expected %v.minDist(%v) == %v, got %v", p, r, expected, d)
@@ -369,7 +369,7 @@ func TestMinDistPositive(t *testing.T) {
 
 func TestMinMaxdist(t *testing.T) {
 	p := Point{-3, -2, -1}
-	r := &Rect{Point{0, 0, 0}, Point{1, 2, 3}}
+	r := Rect{Point{0, 0, 0}, Point{1, 2, 3}}
 
 	// furthest points from p on the faces closest to p in each dimension
 	q1 := Point{0, 2, 3}

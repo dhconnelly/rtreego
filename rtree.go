@@ -220,7 +220,7 @@ func (n *node) String() string {
 
 // entry represents a spatial index record stored in a tree node.
 type entry struct {
-	bb    *Rect // bounding-box of all children of this entry
+	bb    Rect // bounding-box of all children of this entry
 	child *node
 	obj   Spatial
 }
@@ -234,7 +234,7 @@ func (e entry) String() string {
 
 // Spatial is an interface for objects that can be stored in an Rtree and queried.
 type Spatial interface {
-	Bounds() *Rect
+	Bounds() Rect
 }
 
 // Insertion
@@ -346,8 +346,8 @@ func (n *node) getEntry() *entry {
 }
 
 // computeBoundingBox finds the MBR of the children of n.
-func (n *node) computeBoundingBox() (bb *Rect) {
-	childBoxes := make([]*Rect, len(n.entries))
+func (n *node) computeBoundingBox() (bb Rect) {
+	childBoxes := make([]Rect, len(n.entries))
 	for i, e := range n.entries {
 		childBoxes[i] = e.bb
 	}
@@ -404,8 +404,8 @@ func (n *node) split(minGroupSize int) (left, right *node) {
 }
 
 // getAllBoundingBoxes traverses tree populating slice of bounding boxes of non-leaf nodes.
-func (n *node) getAllBoundingBoxes() []*Rect {
-	var rects []*Rect
+func (n *node) getAllBoundingBoxes() []Rect {
+	var rects []Rect
 	if n.leaf {
 		return rects
 	}
@@ -605,7 +605,7 @@ func (tree *Rtree) condenseTree(n *node) {
 // SearchIntersect returns all objects that intersect the specified rectangle.
 // Implemented per Section 3.1 of "R-trees: A Dynamic Index Structure for
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
-func (tree *Rtree) SearchIntersect(bb *Rect, filters ...Filter) []Spatial {
+func (tree *Rtree) SearchIntersect(bb Rect, filters ...Filter) []Spatial {
 	return tree.searchIntersect([]Spatial{}, tree.root, bb, filters)
 }
 
@@ -615,7 +615,7 @@ func (tree *Rtree) SearchIntersect(bb *Rect, filters ...Filter) []Spatial {
 //
 // Kept for backwards compatibility, please use SearchIntersect with a
 // LimitFilter.
-func (tree *Rtree) SearchIntersectWithLimit(k int, bb *Rect) []Spatial {
+func (tree *Rtree) SearchIntersectWithLimit(k int, bb Rect) []Spatial {
 	// backwards compatibility, previous implementation didn't limit results if
 	// k was negative.
 	if k < 0 {
@@ -624,7 +624,7 @@ func (tree *Rtree) SearchIntersectWithLimit(k int, bb *Rect) []Spatial {
 	return tree.SearchIntersect(bb, LimitFilter(k))
 }
 
-func (tree *Rtree) searchIntersect(results []Spatial, n *node, bb *Rect, filters []Filter) []Spatial {
+func (tree *Rtree) searchIntersect(results []Spatial, n *node, bb Rect, filters []Filter) []Spatial {
 	for _, e := range n.entries {
 		if !intersect(e.bb, bb) {
 			continue
@@ -656,8 +656,8 @@ func (tree *Rtree) NearestNeighbor(p Point) Spatial {
 
 // GetAllBoundingBoxes returning slice of bounding boxes by traversing tree. Slice
 // includes bounding boxes from all non-leaf nodes.
-func (tree *Rtree) GetAllBoundingBoxes() []*Rect {
-	var rects []*Rect
+func (tree *Rtree) GetAllBoundingBoxes() []Rect {
+	var rects []Rect
 	if tree.root != nil {
 		rects = tree.root.getAllBoundingBoxes()
 	}
