@@ -1159,6 +1159,24 @@ func TestNearestNeighbor(t *testing.T) {
 	}
 }
 
+func TestComputeBoundingBox(t *testing.T) {
+	rect1, _ := NewRect(Point{0, 0}, []float64{1, 1})
+	rect2, _ := NewRect(Point{0, 1}, []float64{1, 1})
+	rect3, _ := NewRect(Point{1, 0}, []float64{1, 1})
+	n := &node{}
+	n.entries = append(n.entries, entry{bb: rect1})
+	n.entries = append(n.entries, entry{bb: rect2})
+	n.entries = append(n.entries, entry{bb: rect3})
+
+	exp, _ := NewRect(Point{0, 0}, []float64{2, 2})
+	bb := n.computeBoundingBox()
+	d1 := bb.p.dist(exp.p)
+	d2 := bb.q.dist(exp.q)
+	if d1 > EPS || d2 > EPS {
+		t.Errorf("boundingBoxN(%v, %v, %v) != %v, got %v", rect1, rect2, rect3, exp, bb)
+	}
+}
+
 func TestGetAllBoundingBoxes(t *testing.T) {
 	rt1 := NewTree(2, 3, 3)
 	rt2 := NewTree(2, 2, 4)

@@ -347,11 +347,15 @@ func (n *node) getEntry() *entry {
 
 // computeBoundingBox finds the MBR of the children of n.
 func (n *node) computeBoundingBox() (bb Rect) {
-	childBoxes := make([]Rect, len(n.entries))
-	for i, e := range n.entries {
-		childBoxes[i] = e.bb
+	if len(n.entries) == 1 {
+		bb = n.entries[0].bb
+		return
 	}
-	bb = boundingBoxN(childBoxes...)
+
+	bb = boundingBox(n.entries[0].bb, n.entries[1].bb)
+	for _, e := range n.entries[2:] {
+		bb = boundingBox(bb, e.bb)
+	}
 	return
 }
 
