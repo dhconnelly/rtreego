@@ -336,20 +336,6 @@ func TestBoundingBoxContains(t *testing.T) {
 	}
 }
 
-func TestBoundingBoxN(t *testing.T) {
-	rect1, _ := NewRect(Point{0, 0}, []float64{1, 1})
-	rect2, _ := NewRect(Point{0, 1}, []float64{1, 1})
-	rect3, _ := NewRect(Point{1, 0}, []float64{1, 1})
-
-	exp, _ := NewRect(Point{0, 0}, []float64{2, 2})
-	bb := boundingBoxN(rect1, rect2, rect3)
-	d1 := bb.p.dist(exp.p)
-	d2 := bb.q.dist(exp.q)
-	if d1 > EPS || d2 > EPS {
-		t.Errorf("boundingBoxN(%v, %v, %v) != %v, got %v", rect1, rect2, rect3, exp, bb)
-	}
-}
-
 func TestMinDistZero(t *testing.T) {
 	p := Point{1, 2, 3}
 	r := p.ToRect(1)

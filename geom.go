@@ -343,16 +343,3 @@ func boundingBox(r1, r2 Rect) (bb Rect) {
 	}
 	return
 }
-
-// boundingBoxN constructs the smallest rectangle containing all of r...
-func boundingBoxN(rects ...Rect) (bb Rect) {
-	if len(rects) == 1 {
-		bb = rects[0]
-		return
-	}
-	bb = boundingBox(rects[0], rects[1])
-	for _, rect := range rects[2:] {
-		bb = boundingBox(bb, rect)
-	}
-	return
-}
