@@ -28,6 +28,10 @@ type Rtree struct {
 	root        *node
 	size        int
 	height      int
+
+	// deleted is a temporary buffer to avoid memory allocations in Delete.
+	// It is just an optimization and not part of the data structure.
+	deleted []*node
 }
 
 // NewTree returns an Rtree. If the number of objects given on initialization
@@ -312,10 +316,16 @@ func (tree *Rtree) adjustTree(n, nn *node) (*node, *node) {
 
 	// Re-size the bounding box of n to account for lower-level changes.
 	en := n.getEntry()
+	prevBox := en.bb
 	en.bb = n.computeBoundingBox()
 
 	// If nn is nil, then we're just propagating changes upwards.
 	if nn == nil {
+		// Optimize for the case where nothing is changed
+		// to avoid computeBoundingBox which is expensive.
+		if en.bb.Equal(prevBox) {
+			return tree.root, nil
+		}
 		return tree.adjustTree(n.parent, nil)
 	}
 
@@ -569,35 +579,47 @@ func (tree *Rtree) findLeaf(n *node, obj Spatial, cmp Comparator) *node {
 
 // condenseTree deletes underflowing nodes and propagates the changes upwards.
 func (tree *Rtree) condenseTree(n *node) {
-	deleted := []*node{}
+	// reset the deleted buffer
+	tree.deleted = tree.deleted[:0]
 
 	for n != tree.root {
 		if len(n.entries) < tree.MinChildren {
-			// remove n from parent entries
-			entries := []entry{}
-			for _, e := range n.parent.entries {
-				if e.child != n {
-					entries = append(entries, e)
+			// find n and delete it by swapping the last entry into its place
+			idx := -1
+			for i, e := range n.parent.entries {
+				if e.child == n {
+					idx = i
+					break
 				}
 			}
-			if len(n.parent.entries) == len(entries) {
+			if idx == -1 {
 				panic(fmt.Errorf("Failed to remove entry from parent"))
 			}
-			n.parent.entries = entries
+			l := len(n.parent.entries)
+			n.parent.entries[idx] = n.parent.entries[l-1]
+			n.parent.entries = n.parent.entries[:l-1]
 
 			// only add n to deleted if it still has children
 			if len(n.entries) > 0 {
-				deleted = append(deleted, n)
+				tree.deleted = append(tree.deleted, n)
 			}
 		} else {
 			// just a child entry deletion, no underflow
-			n.getEntry().bb = n.computeBoundingBox()
+			en := n.getEntry()
+			prevBox := en.bb
+			en.bb = n.computeBoundingBox()
+
+			if en.bb.Equal(prevBox) {
+				// Optimize for the case where nothing is changed
+				// to avoid computeBoundingBox which is expensive.
+				break
+			}
 		}
 		n = n.parent
 	}
 
-	for i := len(deleted) - 1; i >= 0; i-- {
-		n := deleted[i]
+	for i := len(tree.deleted) - 1; i >= 0; i-- {
+		n := tree.deleted[i]
 		// reinsert entry so that it will remain at the same level as before
 		e := entry{n.computeBoundingBox(), n, nil}
 		tree.insert(e, n.level+1)
