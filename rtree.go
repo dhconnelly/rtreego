@@ -579,10 +579,12 @@ func (tree *Rtree) findLeaf(n *node, obj Spatial, cmp Comparator) *node {
 
 // condenseTree deletes underflowing nodes and propagates the changes upwards.
 func (tree *Rtree) condenseTree(n *node) {
+	// reset the deleted buffer
 	tree.deleted = tree.deleted[:0]
 
 	for n != tree.root {
 		if len(n.entries) < tree.MinChildren {
+			// find n and delete it by swapping the last entry into its place
 			idx := -1
 			for i, e := range n.parent.entries {
 				if e.child == n {
