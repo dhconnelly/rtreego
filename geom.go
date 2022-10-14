@@ -31,6 +31,12 @@ func (err DistError) Error() string {
 // Point represents a point in n-dimensional Euclidean space.
 type Point []float64
 
+func (p Point) Copy() Point {
+	result := make(Point, len(p))
+	copy(result, p)
+	return result
+}
+
 // Dist computes the Euclidean distance between two points p and q.
 func (p Point) dist(q Point) float64 {
 	if len(p) != len(q) {
@@ -188,9 +194,15 @@ func NewRectFromPoints(minPoint, maxPoint Point) (r Rect, err error) {
 		return
 	}
 
-	//checking that  min and max points is swapping
+	// check that min and max point coordinates require swapping
+	copied := false
 	for i, p := range minPoint {
 		if minPoint[i] > maxPoint[i] {
+			if !copied {
+				minPoint = minPoint.Copy()
+				maxPoint = maxPoint.Copy()
+				copied = true
+			}
 			minPoint[i] = maxPoint[i]
 			maxPoint[i] = p
 		}

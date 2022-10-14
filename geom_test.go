@@ -59,14 +59,13 @@ func TestNewRectFromPointsWithSwapPoints(t *testing.T) {
 
 	rect, err := NewRectFromPoints(q, p)
 	if err != nil {
-		t.Errorf("Error on NewRect(%v, %v): %v", p, q, err)
+		t.Errorf("Error on NewRect(%v, %v): %v", q, p, err)
 	}
 
-	// we must swap p and q because in function it was swapped
-	if d := p.dist(rect.q); d > EPS {
-		t.Errorf("Expected p == rect.p")
+	if d := p.dist(rect.p); d > EPS {
+		t.Errorf("Expected p == rect.")
 	}
-	if d := q.dist(rect.p); d > EPS {
+	if d := q.dist(rect.q); d > EPS {
 		t.Errorf("Expected q == rect.q")
 	}
 }
