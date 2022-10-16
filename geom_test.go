@@ -23,7 +23,7 @@ func TestDist(t *testing.T) {
 func TestNewRect(t *testing.T) {
 	p := Point{1.0, -2.5, 3.0}
 	q := Point{3.5, 5.5, 4.5}
-	lengths := []float64{2.5, 8.0, 1.5}
+	lengths := [3]float64{2.5, 8.0, 1.5}
 
 	rect, err := NewRect(p, lengths)
 	if err != nil {
@@ -70,18 +70,9 @@ func TestNewRectFromPointsWithSwapPoints(t *testing.T) {
 	}
 }
 
-func TestNewRectDimMismatch(t *testing.T) {
-	p := Point{-7.0, 10.0}
-	lengths := []float64{2.5, 8.0, 1.5}
-	_, err := NewRect(p, lengths)
-	if _, ok := err.(*DimError); !ok {
-		t.Errorf("Expected DimError on NewRect(%v, %v)", p, lengths)
-	}
-}
-
 func TestNewRectDistError(t *testing.T) {
 	p := Point{1.0, -2.5, 3.0}
-	lengths := []float64{2.5, -8.0, 1.5}
+	lengths := [3]float64{2.5, -8.0, 1.5}
 	_, err := NewRect(p, lengths)
 	if _, ok := err.(DistError); !ok {
 		t.Errorf("Expected distError on NewRect(%v, %v)", p, lengths)
@@ -90,7 +81,7 @@ func TestNewRectDistError(t *testing.T) {
 
 func TestRectPointCoord(t *testing.T) {
 	p := Point{1.0, -2.5}
-	lengths := []float64{2.5, 8.0}
+	lengths := [3]float64{2.5, 8.0, 1}
 	rect, _ := NewRect(p, lengths)
 
 	f := rect.PointCoord(0)
@@ -105,7 +96,7 @@ func TestRectPointCoord(t *testing.T) {
 
 func TestRectLengthsCoord(t *testing.T) {
 	p := Point{1.0, -2.5}
-	lengths := []float64{2.5, 8.0}
+	lengths := [3]float64{2.5, 8.0, 1}
 	rect, _ := NewRect(p, lengths)
 
 	f := rect.LengthsCoord(0)
@@ -120,7 +111,7 @@ func TestRectLengthsCoord(t *testing.T) {
 
 func TestRectEqual(t *testing.T) {
 	p := Point{1.0, -2.5, 3.0}
-	lengths := []float64{2.5, 8.0, 1.5}
+	lengths := [3]float64{2.5, 8.0, 1.5}
 	a, _ := NewRect(p, lengths)
 	b, _ := NewRect(p, lengths)
 	c, _ := NewRect(Point{0.0, -2.5, 3.0}, lengths)
@@ -134,7 +125,7 @@ func TestRectEqual(t *testing.T) {
 
 func TestRectSize(t *testing.T) {
 	p := Point{1.0, -2.5, 3.0}
-	lengths := []float64{2.5, 8.0, 1.5}
+	lengths := [3]float64{2.5, 8.0, 1.5}
 	rect, _ := NewRect(p, lengths)
 	size := lengths[0] * lengths[1] * lengths[2]
 	actual := rect.Size()
@@ -145,7 +136,7 @@ func TestRectSize(t *testing.T) {
 
 func TestRectMargin(t *testing.T) {
 	p := Point{1.0, -2.5, 3.0}
-	lengths := []float64{2.5, 8.0, 1.5}
+	lengths := [3]float64{2.5, 8.0, 1.5}
 	rect, _ := NewRect(p, lengths)
 	size := 4*2.5 + 4*8.0 + 4*1.5
 	actual := rect.margin()
@@ -156,7 +147,7 @@ func TestRectMargin(t *testing.T) {
 
 func TestContainsPoint(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
-	lengths := []float64{6.2, 1.1, 4.9}
+	lengths := [3]float64{6.2, 1.1, 4.9}
 	rect, _ := NewRect(p, lengths)
 
 	q := Point{4.5, -1.7, 4.8}
@@ -167,7 +158,7 @@ func TestContainsPoint(t *testing.T) {
 
 func TestDoesNotContainPoint(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
-	lengths := []float64{6.2, 1.1, 4.9}
+	lengths := [3]float64{6.2, 1.1, 4.9}
 	rect, _ := NewRect(p, lengths)
 
 	q := Point{4.5, -1.7, -3.2}
@@ -178,11 +169,11 @@ func TestDoesNotContainPoint(t *testing.T) {
 
 func TestContainsRect(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
-	lengths1 := []float64{6.2, 1.1, 4.9}
+	lengths1 := [3]float64{6.2, 1.1, 4.9}
 	rect1, _ := NewRect(p, lengths1)
 
 	q := Point{4.1, -1.9, 1.0}
-	lengths2 := []float64{3.2, 0.6, 3.7}
+	lengths2 := [3]float64{3.2, 0.6, 3.7}
 	rect2, _ := NewRect(q, lengths2)
 
 	if yes := rect1.containsRect(rect2); !yes {
@@ -192,11 +183,11 @@ func TestContainsRect(t *testing.T) {
 
 func TestDoesNotContainRectOverlaps(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
-	lengths1 := []float64{6.2, 1.1, 4.9}
+	lengths1 := [3]float64{6.2, 1.1, 4.9}
 	rect1, _ := NewRect(p, lengths1)
 
 	q := Point{4.1, -1.9, 1.0}
-	lengths2 := []float64{3.2, 1.4, 3.7}
+	lengths2 := [3]float64{3.2, 1.4, 3.7}
 	rect2, _ := NewRect(q, lengths2)
 
 	if yes := rect1.containsRect(rect2); yes {
@@ -206,11 +197,11 @@ func TestDoesNotContainRectOverlaps(t *testing.T) {
 
 func TestDoesNotContainRectDisjoint(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
-	lengths1 := []float64{6.2, 1.1, 4.9}
+	lengths1 := [3]float64{6.2, 1.1, 4.9}
 	rect1, _ := NewRect(p, lengths1)
 
 	q := Point{1.2, -19.6, -4.0}
-	lengths2 := []float64{2.2, 5.9, 0.5}
+	lengths2 := [3]float64{2.2, 5.9, 0.5}
 	rect2, _ := NewRect(q, lengths2)
 
 	if yes := rect1.containsRect(rect2); yes {
@@ -220,11 +211,11 @@ func TestDoesNotContainRectDisjoint(t *testing.T) {
 
 func TestNoIntersection(t *testing.T) {
 	p := Point{1, 2, 3}
-	lengths1 := []float64{1, 1, 1}
+	lengths1 := [3]float64{1, 1, 1}
 	rect1, _ := NewRect(p, lengths1)
 
 	q := Point{-1, -2, -3}
-	lengths2 := []float64{2.5, 3, 6.5}
+	lengths2 := [3]float64{2.5, 3, 6.5}
 	rect2, _ := NewRect(q, lengths2)
 
 	// rect1 and rect2 fail to overlap in just one dimension (second)
@@ -236,11 +227,11 @@ func TestNoIntersection(t *testing.T) {
 
 func TestNoIntersectionJustTouches(t *testing.T) {
 	p := Point{1, 2, 3}
-	lengths1 := []float64{1, 1, 1}
+	lengths1 := [3]float64{1, 1, 1}
 	rect1, _ := NewRect(p, lengths1)
 
 	q := Point{-1, -2, -3}
-	lengths2 := []float64{2.5, 4, 6.5}
+	lengths2 := [3]float64{2.5, 4, 6.5}
 	rect2, _ := NewRect(q, lengths2)
 
 	// rect1 and rect2 fail to overlap in just one dimension (second)
@@ -252,11 +243,11 @@ func TestNoIntersectionJustTouches(t *testing.T) {
 
 func TestContainmentIntersection(t *testing.T) {
 	p := Point{1, 2, 3}
-	lengths1 := []float64{1, 1, 1}
+	lengths1 := [3]float64{1, 1, 1}
 	rect1, _ := NewRect(p, lengths1)
 
 	q := Point{1, 2.2, 3.3}
-	lengths2 := []float64{0.5, 0.5, 0.5}
+	lengths2 := [3]float64{0.5, 0.5, 0.5}
 	rect2, _ := NewRect(q, lengths2)
 
 	r := Point{1, 2.2, 3.3}
@@ -269,11 +260,11 @@ func TestContainmentIntersection(t *testing.T) {
 
 func TestOverlapIntersection(t *testing.T) {
 	p := Point{1, 2, 3}
-	lengths1 := []float64{1, 2.5, 1}
+	lengths1 := [3]float64{1, 2.5, 1}
 	rect1, _ := NewRect(p, lengths1)
 
 	q := Point{1, 4, -3}
-	lengths2 := []float64{3, 2, 6.5}
+	lengths2 := [3]float64{3, 2, 6.5}
 	rect2, _ := NewRect(q, lengths2)
 
 	r := Point{1, 4, 3}
@@ -300,11 +291,11 @@ func TestToRect(t *testing.T) {
 
 func TestBoundingBox(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
-	lengths1 := []float64{1, 15, 3}
+	lengths1 := [3]float64{1, 15, 3}
 	rect1, _ := NewRect(p, lengths1)
 
 	q := Point{-6.5, 4.7, 2.5}
-	lengths2 := []float64{4, 5, 6}
+	lengths2 := [3]float64{4, 5, 6}
 	rect2, _ := NewRect(q, lengths2)
 
 	r := Point{-6.5, -2.4, 0.0}
@@ -320,11 +311,11 @@ func TestBoundingBox(t *testing.T) {
 
 func TestBoundingBoxContains(t *testing.T) {
 	p := Point{3.7, -2.4, 0.0}
-	lengths1 := []float64{1, 15, 3}
+	lengths1 := [3]float64{1, 15, 3}
 	rect1, _ := NewRect(p, lengths1)
 
 	q := Point{4.0, 0.0, 1.5}
-	lengths2 := []float64{0.56, 6.222222, 0.946}
+	lengths2 := [3]float64{0.56, 6.222222, 0.946}
 	rect2, _ := NewRect(q, lengths2)
 
 	bb := boundingBox(rect1, rect2)

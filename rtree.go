@@ -22,7 +22,6 @@ func defaultComparator(obj1, obj2 Spatial) bool {
 // spatial objects.  Dim specifies the number of spatial dimensions and
 // MinChildren/MaxChildren specify the minimum/maximum branching factors.
 type Rtree struct {
-	Dim         int
 	MinChildren int
 	MaxChildren int
 	root        *node
@@ -37,9 +36,8 @@ type Rtree struct {
 // NewTree returns an Rtree. If the number of objects given on initialization
 // is larger than max, the Rtree will be initialized using the Overlap
 // Minimizing Top-down bulk-loading algorithm.
-func NewTree(dim, min, max int, objs ...Spatial) *Rtree {
+func NewTree(min, max int, objs ...Spatial) *Rtree {
 	rt := &Rtree{
-		Dim:         dim,
 		MinChildren: min,
 		MaxChildren: max,
 		height:      1,
@@ -194,7 +192,7 @@ func (tree *Rtree) omt(level, nSlices int, objs []entry, m int) *node {
 	// create sub trees
 	walkPartitions(vertSize, objs, func(vert []entry) {
 		// sort vertical slice by a different dimension on every level
-		sortByDim((tree.height-level+1)%tree.Dim, vert)
+		sortByDim((tree.height-level+1)%dimensions, vert)
 
 		// split slice into groups of size k
 		walkPartitions(k, vert, func(part []entry) {

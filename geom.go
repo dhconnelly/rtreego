@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+const (
+	dimensions = 3
+)
+
 // DimError represents a failure due to mismatched dimensions.
 type DimError struct {
 	Expected int
@@ -29,13 +33,7 @@ func (err DistError) Error() string {
 }
 
 // Point represents a point in n-dimensional Euclidean space.
-type Point []float64
-
-func (p Point) Copy() Point {
-	result := make(Point, len(p))
-	copy(result, p)
-	return result
-}
+type Point [3]float64
 
 // Dist computes the Euclidean distance between two points p and q.
 func (p Point) dist(q Point) float64 {
@@ -170,13 +168,9 @@ func (r Rect) String() string {
 // NewRect constructs and returns a pointer to a Rect given a corner point and
 // the lengths of each dimension.  The point p should be the most-negative point
 // on the rectangle (in every dimension) and every length should be positive.
-func NewRect(p Point, lengths []float64) (r Rect, err error) {
+func NewRect(p Point, lengths [3]float64) (r Rect, err error) {
 	r.p = p
-	if len(p) != len(lengths) {
-		err = &DimError{len(p), len(lengths)}
-		return
-	}
-	r.q = make([]float64, len(p))
+
 	for i := range p {
 		if lengths[i] <= 0 {
 			err = DistError(lengths[i])
@@ -195,14 +189,8 @@ func NewRectFromPoints(minPoint, maxPoint Point) (r Rect, err error) {
 	}
 
 	// check that min and max point coordinates require swapping
-	copied := false
 	for i, p := range minPoint {
 		if minPoint[i] > maxPoint[i] {
-			if !copied {
-				minPoint = minPoint.Copy()
-				maxPoint = maxPoint.Copy()
-				copied = true
-			}
 			minPoint[i] = maxPoint[i]
 			maxPoint[i] = p
 		}
@@ -324,8 +312,7 @@ func intersect(r1, r2 Rect) bool {
 
 // ToRect constructs a rectangle containing p with side lengths 2*tol.
 func (p Point) ToRect(tol float64) Rect {
-	dim := len(p)
-	a, b := make([]float64, dim), make([]float64, dim)
+	var a, b Point
 	for i := range p {
 		a[i] = p[i] - tol
 		b[i] = p[i] + tol
@@ -335,13 +322,7 @@ func (p Point) ToRect(tol float64) Rect {
 
 // boundingBox constructs the smallest rectangle containing both r1 and r2.
 func boundingBox(r1, r2 Rect) (bb Rect) {
-	dim := len(r1.p)
-	bb.p = make([]float64, dim)
-	bb.q = make([]float64, dim)
-	if len(r2.p) != dim {
-		panic(DimError{dim, len(r2.p)})
-	}
-	for i := 0; i < dim; i++ {
+	for i := 0; i < dimensions; i++ {
 		if r1.p[i] <= r2.p[i] {
 			bb.p[i] = r1.p[i]
 		} else {
