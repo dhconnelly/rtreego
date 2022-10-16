@@ -41,18 +41,12 @@ func (r Rect) Bounds() Rect {
 }
 
 func rectEq(a, b Rect) bool {
-	if len(a.p) != len(b.p) {
-		return false
-	}
 	for i := 0; i < len(a.p); i++ {
 		if a.p[i] != b.p[i] {
 			return false
 		}
 	}
 
-	if len(a.q) != len(b.q) {
-		return false
-	}
 	for i := 0; i < len(a.q); i++ {
 		if a.q[i] != b.q[i] {
 			return false

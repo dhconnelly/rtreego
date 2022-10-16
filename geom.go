@@ -14,16 +14,6 @@ const (
 	dimensions = 3
 )
 
-// DimError represents a failure due to mismatched dimensions.
-type DimError struct {
-	Expected int
-	Actual   int
-}
-
-func (err DimError) Error() string {
-	return "rtreego: dimension mismatch"
-}
-
 // DistError is an improper distance measurement.  It implements the error
 // and is generated when a distance-related assertion fails.
 type DistError float64
@@ -37,9 +27,6 @@ type Point [3]float64
 
 // Dist computes the Euclidean distance between two points p and q.
 func (p Point) dist(q Point) float64 {
-	if len(p) != len(q) {
-		panic(DimError{len(p), len(q)})
-	}
 	sum := 0.0
 	for i := range p {
 		dx := p[i] - q[i]
@@ -54,10 +41,6 @@ func (p Point) dist(q Point) float64 {
 // Implemented per Definition 2 of "Nearest Neighbor Queries" by
 // N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
 func (p Point) minDist(r Rect) float64 {
-	if len(p) != len(r.p) {
-		panic(DimError{len(p), len(r.p)})
-	}
-
 	sum := 0.0
 	for i, pi := range p {
 		if pi < r.p[i] {
@@ -80,10 +63,6 @@ func (p Point) minDist(r Rect) float64 {
 // Implemented per Definition 4 of "Nearest Neighbor Queries" by
 // N. Roussopoulos, S. Kelley and F. Vincent, ACM SIGMOD, pages 71-79, 1995.
 func (p Point) minMaxDist(r Rect) float64 {
-	if len(p) != len(r.p) {
-		panic(DimError{len(p), len(r.p)})
-	}
-
 	// by definition, MinMaxDist(p, r) =
 	// min{1<=k<=n}(|pk - rmk|^2 + sum{1<=i<=n, i != k}(|pi - rMi|^2))
 	// where rmk and rMk are defined as follows:
@@ -183,11 +162,6 @@ func NewRect(p Point, lengths [3]float64) (r Rect, err error) {
 
 // NewRectFromPoints constructs and returns a pointer to a Rect given a corner points.
 func NewRectFromPoints(minPoint, maxPoint Point) (r Rect, err error) {
-	if len(minPoint) != len(maxPoint) {
-		err = &DimError{len(minPoint), len(maxPoint)}
-		return
-	}
-
 	// check that min and max point coordinates require swapping
 	for i, p := range minPoint {
 		if minPoint[i] > maxPoint[i] {
@@ -230,10 +204,6 @@ func (r Rect) margin() float64 {
 
 // containsPoint tests whether p is located inside or on the boundary of r.
 func (r Rect) containsPoint(p Point) bool {
-	if len(p) != len(r.p) {
-		panic(DimError{len(r.p), len(p)})
-	}
-
 	for i, a := range p {
 		// p is contained in (or on) r if and only if p <= a <= q for
 		// every dimension.
@@ -247,10 +217,6 @@ func (r Rect) containsPoint(p Point) bool {
 
 // containsRect tests whether r2 is is located inside r1.
 func (r Rect) containsRect(r2 Rect) bool {
-	if len(r.p) != len(r2.p) {
-		panic(DimError{len(r.p), len(r2.p)})
-	}
-
 	for i, a1 := range r.p {
 		b1, a2, b2 := r.q[i], r2.p[i], r2.q[i]
 		// enforced by constructor: a1 <= b1 and a2 <= b2.
@@ -267,11 +233,6 @@ func (r Rect) containsRect(r2 Rect) bool {
 // intersect computes the intersection of two rectangles.  If no intersection
 // exists, the intersection is nil.
 func intersect(r1, r2 Rect) bool {
-	dim := len(r1.p)
-	if len(r2.p) != dim {
-		panic(DimError{dim, len(r2.p)})
-	}
-
 	// There are four cases of overlap:
 	//
 	//     1.  a1------------b1
