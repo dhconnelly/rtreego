@@ -134,8 +134,8 @@ corrupt the tree.
 
 Bounding-box and k-nearest-neighbors queries are supported.
 
-Bounding-box queries require a search `*Rect`. It returns all objects that
-touch the search rectangle.
+Bounding-box queries require a search `*Rect`. This function will return all
+objects which has a non-zero intersection volume with the input search rectangle.
 ```Go
     bb, _ := rtreego.NewRect(rtreego.Point{1.7, -3.4}, []float64{3.2, 1.9})
 
