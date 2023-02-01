@@ -213,9 +213,9 @@ func (tree *Rtree) omt(level, nSlices int, objs []entry, m int) *node {
 // node represents a tree node of an Rtree.
 type node struct {
 	parent  *node
-	leaf    bool
 	entries []entry
 	level   int // node depth in the Rtree
+	leaf    bool
 }
 
 func (n *node) String() string {
