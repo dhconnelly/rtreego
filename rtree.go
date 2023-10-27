@@ -727,24 +727,6 @@ func sortPreallocEntries(p Point, entries, sorted []entry, dists []float64) ([]e
 	return sorted, dists
 }
 
-func pruneEntries(p Point, entries []entry, minDists []float64) []entry {
-	minMinMaxDist := math.MaxFloat64
-	for i := range entries {
-		minMaxDist := p.minMaxDist(entries[i].bb)
-		if minMaxDist < minMinMaxDist {
-			minMinMaxDist = minMaxDist
-		}
-	}
-	// remove all entries with minDist > minMinMaxDist
-	pruned := []entry{}
-	for i := range entries {
-		if minDists[i] <= minMinMaxDist {
-			pruned = append(pruned, entries[i])
-		}
-	}
-	return pruned
-}
-
 func pruneEntriesMinDist(d float64, entries []entry, minDists []float64) []entry {
 	var i int
 	for ; i < len(entries); i++ {
