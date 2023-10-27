@@ -160,17 +160,6 @@ func verify(t *testing.T, rt *Rtree) {
 	}
 }
 
-func indexOf(objs []Spatial, obj Spatial) int {
-	ind := -1
-	for i, r := range objs {
-		if r == obj {
-			ind = i
-			break
-		}
-	}
-	return ind
-}
-
 var chooseLeafNodeTests = []struct {
 	bb0, bb1, bb2 Rect // leaf bounding boxes
 	exp           int  // expected chosen leaf
