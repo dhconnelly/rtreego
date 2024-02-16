@@ -1354,6 +1354,24 @@ func TestNearestNeighborsHalf(t *testing.T) {
 	}
 }
 
+func TestMinMaxDistFloatingPointRoundingError(t *testing.T) {
+	rects := []Rect{
+		Point{1134900, 15600}.ToRect(0),
+		Point{1134900, 25600}.ToRect(0),
+		Point{1134900, 22805}.ToRect(0),
+		Point{1134900, 29116}.ToRect(0),
+	}
+	things := make([]Spatial, 0, len(rects))
+	for i := range rects {
+		things = append(things, &rects[i])
+	}
+	rt := NewTree(2, 1, 2, things...)
+	n := rt.NearestNeighbor(Point{1134851.8, 25570.8})
+	if n != things[1] {
+		t.Fatalf("wrong neighbor, expected %v, got %v", things[1], n)
+	}
+}
+
 func ensureOrderedSubset(t *testing.T, actual []Spatial, expected []Spatial) {
 	for i := range actual {
 		if len(expected)-1 < i || actual[i] != expected[i] {

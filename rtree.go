@@ -32,6 +32,9 @@ type Rtree struct {
 	// deleted is a temporary buffer to avoid memory allocations in Delete.
 	// It is just an optimization and not part of the data structure.
 	deleted []*node
+
+	// FloatingPointTolerance is the tolerance to guard against floating point rounding errors during minMaxDist calculations.
+	FloatingPointTolerance float64
 }
 
 // NewTree returns an Rtree. If the number of objects given on initialization
@@ -39,10 +42,11 @@ type Rtree struct {
 // Minimizing Top-down bulk-loading algorithm.
 func NewTree(dim, min, max int, objs ...Spatial) *Rtree {
 	rt := &Rtree{
-		Dim:         dim,
-		MinChildren: min,
-		MaxChildren: max,
-		height:      1,
+		Dim:                    dim,
+		MinChildren:            min,
+		MaxChildren:            max,
+		height:                 1,
+		FloatingPointTolerance: 1e-6,
 		root: &node{
 			entries: []entry{},
 			leaf:    true,
@@ -765,7 +769,8 @@ func (tree *Rtree) nearestNeighbor(p Point, n *node, d float64, nearest Spatial)
 
 		for _, e := range n.entries {
 			minDist := p.minDist(e.bb)
-			if minDist > minMinMaxDist {
+			// Add a bit of tolerance to guard against floating point rounding errors.
+			if minDist > minMinMaxDist+tree.FloatingPointTolerance {
 				continue
 			}
 
