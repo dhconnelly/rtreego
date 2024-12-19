@@ -560,7 +560,38 @@ func (tree *Rtree) DeleteWithComparator(obj Spatial, cmp Comparator) bool {
 	tree.condenseTree(n)
 	tree.size--
 
-	if !tree.root.leaf && len(tree.root.entries) == 1 {
+	/*
+		 when the tree is deep, and deleting nodes, will cause the issue.
+		 the tree could be like this: one obj but 3 levels depth.
+			{
+			  "size": 1,
+			  "depth": 3,
+			  "root": {
+			    "entries": [
+			      {
+			        "bb": "[1.00, 2.00]x[1.00, 2.00]",
+			        "child": {
+			          "entries": [
+			            {
+			              "bb": "[1.00, 2.00]x[1.00, 2.00]",
+			              "child": {
+			                "leaf": true,
+			                "entries": [
+			                  {
+			                    "bb": "[1.00, 2.00]x[1.00, 2.00]"
+			                  }
+			                ]
+			              }
+			            }
+			          ]
+			        }
+			      }
+			    ]
+			  }
+			}
+		so we need to merge the root in loop, instead of once.
+	*/
+	for !tree.root.leaf && len(tree.root.entries) == 1 {
 		tree.root = tree.root.entries[0].child
 	}
 

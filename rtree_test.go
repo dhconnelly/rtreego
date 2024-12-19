@@ -1371,6 +1371,46 @@ func TestMinMaxDistFloatingPointRoundingError(t *testing.T) {
 	}
 }
 
+func TestInsertThenDeleteAllInDifferentOrder(t *testing.T) {
+	rects := []Rect{
+		mustRect(Point{1, 1}, []float64{1, 1}),
+		mustRect(Point{2, 2}, []float64{1, 1}),
+		mustRect(Point{3, 3}, []float64{1, 1}),
+		mustRect(Point{4, 4}, []float64{1, 1}),
+		mustRect(Point{5, 5}, []float64{1, 1}),
+	}
+	things := []Spatial{}
+	for i := range rects {
+		things = append(things, &rects[i])
+	}
+
+	deleteOrders := [][]int{
+		{0, 1, 2, 3, 4},
+		// in this case, the last delete will cause the issue: no thing but 2 levels depth.
+		// {"size":0,"depth":2,"root":{"entries":[]}}
+		{1, 2, 3, 4, 0},
+	}
+	for _, order := range deleteOrders {
+		rt := NewTree(2, 2, 2)
+		for _, thing := range things {
+			rt.Insert(thing)
+		}
+		if rt.Size() != 5 {
+			t.Errorf("Insert failed to insert")
+		}
+
+		for _, idx := range order {
+			rt.Delete(things[idx])
+		}
+		if rt.Size() != 0 {
+			t.Errorf("Delete failed to delete, got size: %d, expected size: 0", rt.Size())
+		}
+		if rt.Depth() != 1 {
+			t.Errorf("Delete failed to delete, got depth: %d, expected depth: 1", rt.Depth())
+		}
+	}
+}
+
 func ensureOrderedSubset(t *testing.T, actual []Spatial, expected []Spatial) {
 	for i := range actual {
 		if len(expected)-1 < i || actual[i] != expected[i] {
