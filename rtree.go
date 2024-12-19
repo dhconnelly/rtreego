@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 )
 
 // Comparator compares two spatials and returns whether they are equal.
@@ -71,7 +72,7 @@ func (tree *Rtree) Size() int {
 }
 
 func (tree *Rtree) String() string {
-	return "foo"
+	return fmt.Sprintf(`{"size":%d,"depth":%d,"root":%v}`, tree.size, tree.height, tree.root)
 }
 
 // Depth returns the maximum depth of tree.
@@ -223,7 +224,17 @@ type node struct {
 }
 
 func (n *node) String() string {
-	return fmt.Sprintf("node{leaf: %v, entries: %v}", n.leaf, n.entries)
+	format := func(v []entry) string {
+		var s []string
+		for _, e := range v {
+			s = append(s, fmt.Sprintf("%v", e))
+		}
+		return fmt.Sprintf(`[%v]`, strings.Join(s, ","))
+	}
+	if n.leaf {
+		return fmt.Sprintf(`{"leaf":%v,"entries":%v}`, n.leaf, format(n.entries))
+	}
+	return fmt.Sprintf(`{"entries":%v}`, format(n.entries))
 }
 
 // entry represents a spatial index record stored in a tree node.
@@ -235,9 +246,9 @@ type entry struct {
 
 func (e entry) String() string {
 	if e.child != nil {
-		return fmt.Sprintf("entry{bb: %v, child: %v}", e.bb, e.child)
+		return fmt.Sprintf(`{"bb":"%v","child":%v}`, e.bb, e.child)
 	}
-	return fmt.Sprintf("entry{bb: %v, obj: %v}", e.bb, e.obj)
+	return fmt.Sprintf(`{"bb":"%v"}`, e.bb)
 }
 
 // Spatial is an interface for objects that can be stored in an Rtree and queried.
